@@ -20,20 +20,21 @@
 ;; Make row for board
 (defun makeRowForBoard (boardSize)
   (cond ((= boardSize 0)
-        ()  
+        ()             )  
         (t 
         (append (list (write-to-string '+))
-        (makeRowForBoard (- boardSize 1)))))))
+        (makeRowForBoard (- boardSize 1)) )  )))
 
 ;; Make board with given size
-(defun makeBoard (boardSize)
+(defun makeBoard (boardSize constSize)
   (cond ((= boardSize 0)
         ()             )
         (t 
-        ;;(print boardSize)
-        (append (list (makeRowForBoard boardSize))
-        (makeBoard (- boardSize 1))))))
-
+        (append
+        ;;(append (list (write-to-string '+))
+        (makeBoard (- boardSize 1) constSize)
+        (list (makeRowForBoard constSize )))
+        )))
 
 ;; // List all the relevant functions here
 
@@ -99,10 +100,14 @@
 
 
 ;; // List all the relevant functions here
-(readPlayFromFile)
+;;(readPlayFromFile)
 ;;(readBoardSize)
 ;;(randomDice)
-(print (makeBoard (readBoardSize)))
+;;(print (makeBoard (readBoardSize)))
+
+(let ((fileChoice (readPlayFromFile))
+       (boardSize (readBoardSize)))
+       (print (makeBoard boardSize boardSize)))
 
 ;; /* *********************************************
 ;; Source Code to help the computer win the game
