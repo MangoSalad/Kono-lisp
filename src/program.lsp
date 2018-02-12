@@ -17,15 +17,15 @@
 ;; Source Code to draw the game board on the screen
 ;; ********************************************* */
 
-;; Make row for board
+;; Make row for board.
 (defun makeRowForBoard (boardSize)
   (cond ((= boardSize 0)
-        ()             )  
+        ()             )
         (t 
-        (append (list (write-to-string '+))
+        (append (list (write '+))
         (makeRowForBoard (- boardSize 1)) )  )))
 
-;; Make board with given size
+;; Make board with given size.
 (defun makeBoard (boardSize constSize)
   (cond ((= boardSize 0)
         ()             )
@@ -34,6 +34,16 @@
         ;;(append (list (write-to-string '+))
         (makeBoard (- boardSize 1) constSize)
         (list (makeRowForBoard constSize )))
+        )))
+
+;; Displays board to user.
+(defun displayBoard (board boardlength)
+  (cond ((= (length board) 0)
+          ()                 )
+        (t ;;(print (length board) (first board))
+           ;;(print (first board))
+           (format t "~D ~S ~%" boardlength (first board))
+           (displayBoard (rest board) boardlength)
         )))
 
 ;; // List all the relevant functions here
@@ -105,9 +115,12 @@
 ;;(randomDice)
 ;;(print (makeBoard (readBoardSize)))
 
-(let ((fileChoice (readPlayFromFile))
-       (boardSize (readBoardSize)))
-       (print (makeBoard boardSize boardSize)))
+(let* ((fileChoice (readPlayFromFile))
+      (boardSize (readBoardSize))
+      (board (makeBoard boardSize boardSize)))
+      (terpri)
+      (displayBoard board (length board))
+      )
 
 ;; /* *********************************************
 ;; Source Code to help the computer win the game
