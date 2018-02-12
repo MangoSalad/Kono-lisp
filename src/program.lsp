@@ -18,12 +18,33 @@
 ;; ********************************************* */
 
 ;; Make row for board.
-(defun makeRowForBoard (boardSize)
-  (cond ((= boardSize 0)
+(defun makeRowForBoard (column row boardSize)
+  (cond ((= column 0)
         ()             )
+        ;; First row is white.
+        ((= row 1)
+          (append (list (write 'w))
+          (makeRowForBoard (- column 1) row boardSize) )
+        )
+        ;; Place white pieces on second row.
+        ((and (= row 2) (OR (= column 1) (= column boardSize)))
+          (append (list (write 'w))
+          (makeRowForBoard (- column 1) row boardSize) )
+        )
+        ;; Place black pieces on last row
+        ((= row boardSize)
+          (append (list (write 'b))
+          (makeRowForBoard (- column 1) row boardSize) )        
+        )
+        ;; Place black pieces on second to last row
+        ((and (= row (- boardSize 1)) (OR (= column 1) (= column boardSize)))
+          (append (list (write 'b))
+          (makeRowForBoard (- column 1) row boardSize) )
+        )
+        ;; Place regular + pieces
         (t 
         (append (list (write '+))
-        (makeRowForBoard (- boardSize 1)) )  )))
+        (makeRowForBoard (- column 1) row boardSize) )  )))
 
 ;; Make board with given size.
 (defun makeBoard (boardSize constSize)
@@ -31,9 +52,8 @@
         ()             )
         (t 
         (append
-        ;;(append (list (write-to-string '+))
         (makeBoard (- boardSize 1) constSize)
-        (list (makeRowForBoard constSize )))
+        (list (makeRowForBoard constSize boardSize constSize)))
         )))
 
 ;; Displays board to user.
