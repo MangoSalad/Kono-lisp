@@ -1,3 +1,7 @@
+;; Seed randomness. Only use of a global var. Find better solution later. 
+;; Solution found on internet: https://stackoverflow.com/questions/4034042/random-in-common-lisp-not-so-random
+(setf *random-state* (make-random-state t))
+
 ;; ************************************************************
 ;; * Name:  Philip Glazman                                    *
 ;; * Project:  Kono - Lisp Implementation                     *
@@ -9,20 +13,33 @@
 
 ;; Random dice roll, return number between 2 and 12. 
 (defun randomDice ()
-	(+ 2 (random 12)))
+	(+ 2 (random 11)))
 
 ;; Process to choose first player
 (defun choosefirstPlayer()
-	(let * ((humanDice (randomDice)
-			(computerDice (randomDice))))
+	(let* ((humanDice (randomDice))
+			(computerDice (randomDice)))
+			(format t "Human rolls ~D. ~%" humanDice)
+			(format t "Computer rolls ~D. ~%" computerDice)
 			(cond 	((> humanDice ComputerDice)
-					('human))
+					(list 'human))
 					((< humanDice ComputerDice)
-					('computer))
+					(list 'computer))
 					((= humanDice ComputerDice)
 					(choosefirstPlayer))
 			)
 	)
+)
+
+;;(defun readHumanColor)
+
+
+;; Choose color
+(defun chooseColor(firstPlayer)
+	(cond 	((= firstPlayer (list 'human))
+			(readHumanColor))
+			((= firstPlayer (list 'computer))
+			(chooseComputerColor)))
 )
 	
 
@@ -160,7 +177,7 @@
 			(board (makeBoard boardSize boardSize)))
 			(terpri)
 			(displayBoard board 0)
-			(choosefirstPlayer)
+			(print (choosefirstPlayer))
 			)
 
 ;; /* *********************************************
