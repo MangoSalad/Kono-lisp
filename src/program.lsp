@@ -59,11 +59,17 @@
 ;; Displays board to user.
 (defun displayBoard (board boardlength)
   (cond ((= (length board) 0)
-          ()                 )
+          (format t "~D ~%" 'S)  
+          (format t "~D" 'W)
+          )
+        ((= boardlength 0)
+          (format t "~D ~%" 'N)
+          (displayBoard board (+ boardlength 1)))
         (t ;;(print (length board) (first board))
            ;;(print (first board))
            (format t "~D ~S ~%" boardlength (first board))
-           (displayBoard (rest board) boardlength)
+           (displayBoard (rest board) (+ boardlength 1))
+           (list (write (length board)))
         )))
 
 ;; // List all the relevant functions here
@@ -139,7 +145,7 @@
       (boardSize (readBoardSize))
       (board (makeBoard boardSize boardSize)))
       (terpri)
-      (displayBoard board (length board))
+      (displayBoard board 0)
       )
 
 ;; /* *********************************************
