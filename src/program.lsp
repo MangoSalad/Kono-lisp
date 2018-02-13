@@ -210,25 +210,36 @@
 ;;(randomDice)
 ;;(print (makeBoard (readBoardSize)))
 
+;; /* *********************************************
+;; Source Code for serialization 
+;; ********************************************* */
+
+;; Return list of players, board, current player
+(defun openFile()
+	(let* (	( inFile (open "game.txt" :direction :input :if-does-not-exist nil))
+			(print (read-line inFile ))
+																				)
+			(close inFile)))
+
+(print (openFile))
+
 ;; init game new
-(let* 	(	;; User is asked to resume game from text file.
-			(fileChoice (readPlayFromFile))
-			;; User is asked for board size at the start of round.
-			(boardSize (readBoardSize))
-			;; Creates board using n size.
-			(board (makeBoard boardSize boardSize))
-			;; choose first player and board.
-			(players (chooseColor (choosefirstPlayer))))
+;; (let* 	(	;; User is asked to resume game from text file.
+;; 			(fileChoice (readPlayFromFile))
+;; 			;; User is asked for board size at the start of round.
+;; 			(boardSize (readBoardSize))
+;; 			;; Creates board using n size.
+;; 			(board (makeBoard boardSize boardSize))
+;; 			;; choose first player and board.
+;; 			(players (chooseColor (choosefirstPlayer))))
 
-			(playRound players board (first players))
+;; 			(playRound players board (first players))
 			
-			)
-
-;; display board.
-;; (displayBoard board 0)
+;; 			)
 
 
 ;; /* *********************************************
 ;; Source Code to help the computer win the game
 ;; ********************************************* */
 ;; // List all the relevant functions here
+
