@@ -32,12 +32,13 @@
 )
 
 ;; computer chooses random color
+;; might be an issue where compuy can only choose 0...
 (defun computerColor ()
 	(let* ( (randomColor (random 1)) )
 			(cond 	((= randomColor 1)
-						(list 'w))
+						(append (append (list 'w) (list 'human)) (list 'b)))
 					((= randomColor 0)
-						(list 'b))
+						(append (append (list 'b) (list 'human)) (list 'w)))
 			)
 	)
 )
@@ -45,11 +46,25 @@
 ;; Choose color
 (defun chooseColor(firstPlayer)
 	(cond 	((string= (first firstPlayer) 'human)
-			(readHumanColor))
+			(append firstPlayer (readHumanColor)))
 			((string= (first firstPlayer) 'computer)
-			(computerColor)))
+			(append firstPlayer (computerColor ))))
 )
-	
+
+;; Alternative between player and play round.
+(defun playRound (players board currentTurn)
+		(format t "It is ~A's turn. ~%" currentTurn)
+		(displayBoard board 0)
+		;;(check winner)
+		(readMenu)
+		(cond 
+			((string= currentTurn (first (rest (rest players))) )
+			 	(playRound players board (first players)))
+			((string= currentTurn (first players))
+				(playRound players board (first (rest (rest players)))))
+		)
+)
+
 
 ;; /* *********************************************
 ;; Source Code to draw the game board on the screen
@@ -61,27 +76,27 @@
 				()             )
 				;; First row is white.
 				((= row 1)
-					(append (list (write 'w))
+					(append (list 'w)
 					(makeRowForBoard (- column 1) row boardSize) )
 				)
 				;; Place white pieces on second row.
 				((and (= row 2) (OR (= column 1) (= column boardSize)))
-					(append (list (write 'w))
+					(append (list 'w)
 					(makeRowForBoard (- column 1) row boardSize) )
 				)
 				;; Place black pieces on last row
 				((= row boardSize)
-					(append (list (write 'b))
+					(append (list 'b)
 					(makeRowForBoard (- column 1) row boardSize) )        
 				)
 				;; Place black pieces on second to last row
 				((and (= row (- boardSize 1)) (OR (= column 1) (= column boardSize)))
-					(append (list (write 'b))
+					(append (list 'b)
 					(makeRowForBoard (- column 1) row boardSize) )
 				)
 				;; Place regular + pieces
 				(t 
-				(append (list (write '+))
+				(append (list '+)
 				(makeRowForBoard (- column 1) row boardSize) )  )))
 
 ;; Make board with given size.
@@ -144,15 +159,15 @@
 				( (= choice 3)
 					(print choice)  )
 				( (= choice 4)
-					(print choice)  )
+					(Quit)  )
 				( t 
 					(readMenu) )) )
 
 (defun validColor (choice)
 	(cond ( (string= choice "W")
-			(list 'w))
+			(append (append (list 'w) (list 'computer) (list 'b))))
 		 ( (string= choice "B")
-		 	(list 'b))
+		 	(append (append (list 'b) (list 'computer) (list 'w))))
 		  (t 
 		  	(readHumanColor))))
 
@@ -193,13 +208,23 @@
 ;;(randomDice)
 ;;(print (makeBoard (readBoardSize)))
 
-(let* ((fileChoice (readPlayFromFile))
+;; init game new
+(let* 	(	;; User is asked to resume game from text file.
+			(fileChoice (readPlayFromFile))
+			;; User is asked for board size at the start of round.
 			(boardSize (readBoardSize))
-			(board (makeBoard boardSize boardSize)))
-			(terpri)
-			(displayBoard board 0)
-			(print (chooseColor (choosefirstPlayer)))
+			;; Creates board using n size.
+			(board (makeBoard boardSize boardSize))
+			;; choose first player and board.
+			(players (chooseColor (choosefirstPlayer))))
+
+			(playRound players board (first players))
+			
 			)
+
+;; display board.
+;; (displayBoard board 0)
+
 
 ;; /* *********************************************
 ;; Source Code to help the computer win the game
