@@ -31,15 +31,23 @@
 	)
 )
 
-;;(defun readHumanColor)
-
+;; computer chooses random color
+(defun computerColor ()
+	(let* ( (randomColor (random 1)) )
+			(cond 	((= randomColor 1)
+						(list 'w))
+					((= randomColor 0)
+						(list 'b))
+			)
+	)
+)
 
 ;; Choose color
 (defun chooseColor(firstPlayer)
-	(cond 	((= firstPlayer (list 'human))
+	(cond 	((string= (first firstPlayer) 'human)
 			(readHumanColor))
-			((= firstPlayer (list 'computer))
-			(chooseComputerColor)))
+			((string= (first firstPlayer) 'computer)
+			(computerColor)))
 )
 	
 
@@ -140,6 +148,14 @@
 				( t 
 					(readMenu) )) )
 
+(defun validColor (choice)
+	(cond ( (string= choice "W")
+			(list 'w))
+		 ( (string= choice "B")
+		 	(list 'b))
+		  (t 
+		  	(readHumanColor))))
+
 ;; Ask user to read if they would like to read game from file.
 (defun readPlayFromFile ()
 		(princ "Do you want to start a game from a file? (Y/N) ")
@@ -165,6 +181,11 @@
 		(terpri)
 		(validMenu (read)))
 
+;; Ask user for color.
+(defun readHumanColor ()
+		(princ  "What color will you play? (w/b)")
+		(terpri)
+		(validColor (read)))
 
 ;; // List all the relevant functions here
 ;;(readPlayFromFile)
@@ -177,7 +198,7 @@
 			(board (makeBoard boardSize boardSize)))
 			(terpri)
 			(displayBoard board 0)
-			(print (choosefirstPlayer))
+			(print (chooseColor (choosefirstPlayer)))
 			)
 
 ;; /* *********************************************
