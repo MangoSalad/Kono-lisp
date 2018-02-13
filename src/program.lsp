@@ -56,7 +56,9 @@
 		(format t "It is ~A's turn. ~%" currentTurn)
 		(displayBoard board 0)
 		;;(check winner)
-		(readMenu)
+
+		(let* (choice (readMenu)))
+		
 		(cond 
 			((string= currentTurn (first (rest (rest players))) )
 			 	(playRound players board (first players)))
