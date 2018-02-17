@@ -197,6 +197,31 @@
 	;; rest thru columns, 
 	(filterColumns (filterRows board (+ (length board) 1) (first coordinates)) (+ (length board) 1) (first (rest coordinates))))
 
+;; Returns row with updated piece at specific column index
+(defun updateColumn (row boardlength columnIndex piece)
+	(cond ( (= (length row) (- boardlength columnIndex) )
+			(append piece (rest row)))
+		  (t 
+		  	(cons (first row) (updateColumn (rest row) boardlength columnIndex piece)
+			))))
+
+(defun updateRow (board boardlength rowIndex row)
+	(cond ( (= (length board) (- boardlength rowIndex) )
+			(append row (rest board)))
+		  (t 
+		  	(cons (first board) (updateRow (rest board) boardlength rowIndex row)
+			))))
+
+(defun updateNewCoordinates (board row column piece)
+	(updateRow board (+ (length board) 1) row (list (updateColumn (filterRows board (+ (length board) 1) row) (+ (length board) 1) column piece))))
+
+(defun updateBoard (board oldCoordinates NewCoordinates piece)
+	;; update new coordinate
+	(updateNewCoordinates board (first NewCoordinates) (first (rest NewCoordinates)) piece)
+	;; remove old coordinate
+	)
+
+	
 
 ;; // List all the relevant functions here
 
@@ -323,7 +348,7 @@
 
 (defun getPlayerColor (players currentTurn)
 	(cond 	(	(string= currentTurn (first (rest (rest players))) )
-				(rest (rest (rest players))))
+				(first (rest (rest (rest players)))))
 			(	(string= currentTurn (first players))
 				(first (rest players)))))
 
@@ -348,22 +373,25 @@
 		(cond 	((string= (first choice) 'save)
 							(print "Saving game"))
 						((string= (first choice) 'play)
-							(validPieceToMove board (append (readHumanRow) (readHumanColumn)))
-							;;(validDirectionToMove (readHumanDirection))
-							)
-						((string= (first choice) 'help)
-							(print "Asking for help"))
-						((string= (first choice) 'quit)
-							(print "Quiting game")
-							(Quit)))
+							(let*( (coordinates (append (readHumanRow) (readHumanColumn) ))
+								   (finalCoordinates (readHumanDirection coordinates)))
+									(validPieceToMove board coordinates)
+									;;(validDirectionToMove))
+									(cond 
+									;; if the current player is last in players, next in players
+									((string= currentTurn (first (rest (rest players))) )
+										(playRound players (updateBoard board coordinates finalCoordinates (list playerColor)) (first players)))
+									;; if current player is first players, then next in players
+									((string= currentTurn (first players))
+										(playRound players (updateBoard board coordinates finalCoordinates (list playerColor)) (first (rest (rest players))))))
+									))
+								((string= (first choice) 'help)
+									(print "Asking for help"))
+								((string= (first choice) 'quit)
+									(print "Quiting game")
+									(Quit)))))
 		;; Logic for updating board state, and next player
-		(cond 
-			;; if the current player is last in players, next in players
-			((string= currentTurn (first (rest (rest players))) )
-			 	(playRound players board (first players)))
-			;; if current player is first players, then next in players
-			((string= currentTurn (first players))
-				(playRound players board (first (rest (rest players))))))))
+		
 
 ;; init game new
 (let* 	(	;; User is asked to resume game from text file.
