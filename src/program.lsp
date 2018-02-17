@@ -212,12 +212,12 @@
 		  	(cons (first board) (updateRow (rest board) boardlength rowIndex row)
 			))))
 
-(defun updateNewCoordinates (board row column piece)
+(defun updateCoordinates (board row column piece)
 	(updateRow board (+ (length board) 1) row (list (updateColumn (filterRows board (+ (length board) 1) row) (+ (length board) 1) column piece))))
 
 (defun updateBoard (board oldCoordinates NewCoordinates piece)
 	;; update new coordinate
-	(updateNewCoordinates board (first NewCoordinates) (first (rest NewCoordinates)) piece)
+	(updateCoordinates (updateCoordinates board (first NewCoordinates) (first (rest NewCoordinates)) piece) (first oldCoordinates) (first (rest oldCoordinates)) (list '+))
 	;; remove old coordinate
 	)
 
@@ -402,7 +402,9 @@
 			(board (makeBoard boardSize boardSize))
 			;; choose first player and board.
 			(players (chooseColor (choosefirstPlayer))))
-
+			
+			(format t "~A is ~A. ~%" (first players) (first (rest players)))
+			(format t "~A is ~A. ~%" (first (rest (rest players))) (first (rest (rest (rest players)))))
 			(playRound players board (first players))
 			
 			)
