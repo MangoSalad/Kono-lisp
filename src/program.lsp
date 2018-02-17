@@ -112,13 +112,22 @@
 		(format t "It is ~A's turn. ~%" currentTurn)
 		(displayBoard board 0)
 		;;(check winner)
-		(readMenu)
+		(let*( 	(choice (readMenu)))
+		(cond 	((string= (first choice) 'save)
+							(print "Saving game"))
+						((string= (first choice) 'play)
+							(print "Playing game"))
+						((string= (first choice) 'help)
+							(print "Asking for help"))
+						((string= (first choice) 'quit)
+							(print "Quiting game")
+							(Quit)))
 		;; Logic for updating board state, and next player
 		(cond 
 			((string= currentTurn (first (rest (rest players))) )
 			 	(playRound players board (first players)))
 			((string= currentTurn (first players))
-				(playRound players board (first (rest (rest players)))))))
+				(playRound players board (first (rest (rest players))))))))
 
 ;; /* *********************************************
 ;; Source Code to draw the game board on the screen
@@ -231,13 +240,13 @@
 ;; Validates menu choice
 (defun validMenu (choice)
 	(cond ( (= choice 1)
-					(print choice)  )
+					(list 'save)  )
 				( (= choice 2)
-					(print choice)  )
+					(list 'play)  )
 				( (= choice 3)
-					(print choice)  )
+					(list 'help)  )
 				( (= choice 4)
-					(Quit)  )
+					(list 'quit)  )
 				( t 
 					(readMenu) )) )
 
