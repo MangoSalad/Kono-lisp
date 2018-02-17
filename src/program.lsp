@@ -96,39 +96,6 @@
 			((string= (first firstPlayer) 'computer)
 			(append firstPlayer (computerColor )))))
 
-;; /* ********************************************************************* 
-;; Function Name: playRound 
-;; Purpose: Logic for the round. Alternates each player for the turn and holds board state.
-;; Parameters: 
-;;             none.
-;; Return Value: none.
-;; Local Variables: 
-;;             none.
-;; Algorithm: 
-;;             1) ...
-;; Assistance Received: none 
-;; ********************************************************************* */
-(defun playRound (players board currentTurn)
-		(format t "It is ~A's turn. ~%" currentTurn)
-		(displayBoard board 0)
-		;;(check winner)
-		(let*( 	(choice (readMenu)))
-		(cond 	((string= (first choice) 'save)
-							(print "Saving game"))
-						((string= (first choice) 'play)
-							(print "Playing game"))
-						((string= (first choice) 'help)
-							(print "Asking for help"))
-						((string= (first choice) 'quit)
-							(print "Quiting game")
-							(Quit)))
-		;; Logic for updating board state, and next player
-		(cond 
-			((string= currentTurn (first (rest (rest players))) )
-			 	(playRound players board (first players)))
-			((string= currentTurn (first players))
-				(playRound players board (first (rest (rest players))))))))
-
 ;; /* *********************************************
 ;; Source Code to draw the game board on the screen
 ;; ********************************************* */
@@ -198,7 +165,7 @@
 
 ;; Displays board to user.
 (defun displayBoard (board boardlength)
-	(cond ((= (length board) 0)
+	(cond 		((= (length board) 0)
 					(format t "~D ~%" 'S)  
 					(format t "~D  " 'W)
 					)
@@ -210,6 +177,26 @@
 					 (displayBoard (rest board) (+ boardlength 1))
 					 (format t "~D " (length board))
 				)))
+
+;; Returns row based on row number.
+(defun filterRows (board boardlength row)
+	(cond (	(= (length board) (- boardlength row) )
+			(first board))
+		  (t (filterRows (rest board) boardlength row))))
+
+;; Returns column based on colum number.
+(defun filterColumns (row boardlength column)
+	(cond (	(= (length row) (- boardlength column) )
+			(first row))
+		  (t (filterColumns (rest row) boardlength column))))
+
+;; Checks if a given piece can be moved.
+;; returns piece color as a check, if not piece ,then clearly cannot move - allows computer and human to do their own checks
+(defun validPieceToMove (board coordinates)
+	;;rest thru rows,
+	;; rest thru columns, 
+	(filterColumns (filterRows board (+ (length board) 1) (first coordinates)) (+ (length board) 1) (first (rest coordinates))))
+
 
 ;; // List all the relevant functions here
 
@@ -237,7 +224,7 @@
 				( t 
 					(readBoardSize) )) )
 
-;; Validates menu choice
+;; Validates menu choice.
 (defun validMenu (choice)
 	(cond ( (= choice 1)
 					(list 'save)  )
@@ -250,6 +237,20 @@
 				( t 
 					(readMenu) )) )
 
+;; Validates direction of piece.
+(defun validHumanDirection (choice row column)
+	(cond ( (string= choice "NW")
+			(append (list (- row 1)) (list (- column 1))))
+		  ( (string= choice "NE")
+		  	(append (list (- row 1)) (list (+ column 1))))
+		  ( (string= choice "SE")
+		  	(append (list (+ row 1)) (list (+ column 1))))
+		  ( (string= choice "SW")
+		  	(append (list (+ row 1)) (list (- column 1))))
+		  (t 
+		  	(readHumanDirection))))
+
+;; Validates color choice.
 (defun validColor (choice)
 	(cond ( (string= choice "W")
 			(append (append (list 'w) (list 'computer) (list 'b))))
@@ -289,11 +290,24 @@
 		(terpri)
 		(validColor (read)))
 
-;; // List all the relevant functions here
-;;(readPlayFromFile)
-;;(readBoardSize)
-;;(randomDice)
-;;(print (makeBoard (readBoardSize)))
+;; Ask user for row of piece to move.
+(defun readHumanRow ()
+	(princ "Enter row of piece to move: ")
+	(terpri)
+	(list (read)))
+
+;; Ask user for column of piece to move.
+(defun readHumanColumn ()
+	(princ "Enter column of piece to move: ")
+	(terpri)
+	(list (read)))
+
+;; Ask user direction to move piece
+(defun readHumanDirection (coordinates)
+	(princ "Enter direction to move (NW/NE/SE/SW): ")
+	(terpri)
+	(validHumanDirection (read) (first coordinates) (first (rest coordinates))))
+
 
 ;; /* *********************************************
 ;; Source Code for serialization 
@@ -306,6 +320,50 @@
 ;; 																				)
 ;; 			(close inFile)))
 ;; (print (openFile))
+
+(defun getPlayerColor (players currentTurn)
+	(cond 	(	(string= currentTurn (first (rest (rest players))) )
+				(rest (rest (rest players))))
+			(	(string= currentTurn (first players))
+				(first (rest players)))))
+
+;; /* ********************************************************************* 
+;; Function Name: playRound 
+;; Purpose: Logic for the round. Alternates each player for the turn and holds board state.
+;; Parameters: 
+;;             none.
+;; Return Value: none.
+;; Local Variables: 
+;;             none.
+;; Algorithm: 
+;;             1) ...
+;; Assistance Received: none 
+;; ********************************************************************* */
+(defun playRound (players board currentTurn)
+		(format t "It is ~A's turn. ~%" currentTurn)
+		(displayBoard board 0)
+		;;(check winner)
+		(let*( 	(choice (readMenu))
+				(playerColor (getPlayerColor players currentTurn)))
+		(cond 	((string= (first choice) 'save)
+							(print "Saving game"))
+						((string= (first choice) 'play)
+							(validPieceToMove board (append (readHumanRow) (readHumanColumn)))
+							;;(validDirectionToMove (readHumanDirection))
+							)
+						((string= (first choice) 'help)
+							(print "Asking for help"))
+						((string= (first choice) 'quit)
+							(print "Quiting game")
+							(Quit)))
+		;; Logic for updating board state, and next player
+		(cond 
+			;; if the current player is last in players, next in players
+			((string= currentTurn (first (rest (rest players))) )
+			 	(playRound players board (first players)))
+			;; if current player is first players, then next in players
+			((string= currentTurn (first players))
+				(playRound players board (first (rest (rest players))))))))
 
 ;; init game new
 (let* 	(	;; User is asked to resume game from text file.
