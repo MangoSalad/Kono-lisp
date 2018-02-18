@@ -349,8 +349,25 @@
 			((string= color "WHITE")
 			'w)))
 
-(defun fileBoardToGameBoard (board))
-	
+;; Convert each board row into board.
+;; to do add superpieces
+(defun convertBoardRow (row)
+	(cond 	( (= (length row) 0)
+			())
+			( (string= (first row) "B")
+			(append (list 'b) (convertBoardRow (rest row))))
+			( (string= (first row) "W")
+			(append (list 'w) (convertBoardRow (rest row))))
+			( (string= (first row) "O")
+			(append (list '+) (convertBoardRow (rest row))))))
+
+;; Convert file board to game board.
+(defun fileBoardToGameBoard (board)
+	(cond 	( (= (length board) 0)
+				())
+			(t 
+				(append (list (convertBoardRow (first board))) (fileBoardToGameBoard  (rest board))))))
+
 
 ;; Return list of players, board, current player
 (defun openFile()
@@ -370,7 +387,7 @@
 				(format t "Computer Color: ~D ~%" (fileColorToGameColor computerColor))
 				(format t "Human Score: ~D ~%" humanScore)
 				(format t "Human Color: ~D ~%" (fileColorToGameColor humanColor))
-				(format t "Board: ~S ~%" board)
+				(format t "Board: ~S ~%" (fileBoardToGameBoard board))
 				(format t "Next Player: ~D ~%" nextPlayer)
 				(print file))))
 	;; (let* (	( inFile (open "game.txt" :direction :input :if-does-not-exist nil))
