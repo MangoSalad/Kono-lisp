@@ -290,6 +290,12 @@
 		(terpri)
 		(validYesNo (read))  )
 
+;; Ask user for filename of save game file.
+(defun readFileName()
+		(princ "Name of game file: ")
+		(terpri)
+		(validFile (read-line)))
+
 ;; Ask user for size of board.
 (defun readBoardSize ()
 		(princ "Enter size of board (5/7/9): ")
@@ -338,9 +344,9 @@
 ;; Source Code for serialization 
 ;; ********************************************* */
 
-;;(defun fileExists()
-	;;probe
-;;)
+;; check if file exists
+(defun validFile (fileName)
+	(probe-file fileName))
 
 ;; Converts color identifies (black/white) in file to ones used in game (b/w).
 (defun fileColorToGameColor (color)
@@ -370,8 +376,13 @@
 
 
 ;; Return list of players, board, current player
-(defun openFile()
-	(with-open-file (stream "game.txt" :direction :input :if-does-not-exist nil)
+(defun openFile(fileName)
+	;; Invalid file.
+	(cond ( (eq fileName nil)
+			(princ "Could not open file.")
+			(Quit)))
+
+	(with-open-file (stream fileName :direction :input :if-does-not-exist nil)
 		(let* ( (file (read stream nil))
 				(roundNum (first file))
 				(computerScore (first (rest file)))
@@ -389,7 +400,9 @@
 				(format t "Human Color: ~D ~%" (fileColorToGameColor humanColor))
 				(format t "Board: ~S ~%" (fileBoardToGameBoard board))
 				(format t "Next Player: ~D ~%" nextPlayer)
-				(print file))))
+
+				(cons (cons roundNum computerScore) (fileColorToGameColor computerColor))
+		)))
 	;; (let* (	( inFile (open "game.txt" :direction :input :if-does-not-exist nil))
 	;; 		(print (read-line inFile ))
 	;; 																			)
@@ -440,26 +453,47 @@
 									(print "Quiting game")
 									(Quit)))))
 		;; Logic for updating board state, and next player
-		
-(openFile)
-;; init game new
-;; (let* 	(	;; User is asked to resume game from text file.
-;; 			(fileChoice (readPlayFromFile))
-;; 			;; User is asked for board size at the start of round.
-;; 			(boardSize (readBoardSize))
-;; 			;; Creates board using n size.
-;; 			(board (makeBoard boardSize boardSize))
-;; 			;; choose first player and board.
-;; 			(players (chooseColor (choosefirstPlayer))))
+
+;; Begins the tournament from loading game from file.
+(defun loadGame()
+	(let*	(	(fileName (readFileName))
+				(gameSave (openFile fileName))
+				;;(board)
+				
 			
-;; 			(format t "~A is ~A. ~%" (first players) (first (rest players)))
-;; 			(format t "~A is ~A. ~%" (first (rest (rest players))) (first (rest (rest (rest players)))))
-;; 			(playRound players board (first players))
+			)
+				(print gameSave)
 			
-;; 			)
+			))
+
+;; Begins tournament from a new game.
+(defun initGame()
+	(let* 	(	;; User is asked for board size at the start of round.
+				(boardSize (readBoardSize))
+				;; Creates board using n size.
+				(board (makeBoard boardSize boardSize))
+				;; choose first player and board.
+				(players (chooseColor (choosefirstPlayer))))
+				
+				(format t "~A is ~A. ~%" (first players) (first (rest players)))
+				(format t "~A is ~A. ~%" (first (rest (rest players))) (first (rest (rest (rest players)))))
+				(playRound players board (first players))
+				
+				))
+
+;; Ask user for starting a new game or load a previous one from file.
+(let* ( (fileChoice (readPlayFromFile)))
+		(cond 	((string= fileChoice "Y")
+			 	(loadGame))
+				((string= fileChoice "N")
+				(initGame))))
 
 ;; /* *********************************************
 ;; Source Code to help the computer win the game
 ;; ********************************************* */
 ;; // List all the relevant functions here
+
+
+
+
 
