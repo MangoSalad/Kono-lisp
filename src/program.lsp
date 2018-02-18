@@ -195,7 +195,13 @@
 (defun validPieceToMove (board coordinates)
 	;;rest thru rows,
 	;; rest thru columns, 
+	(print "in validpiecetomove")
 	(filterColumns (filterRows board (+ (length board) 1) (first coordinates)) (+ (length board) 1) (first (rest coordinates))))
+
+;; Checks if the new coordinates are not occuping piece and direction is not out of bounds
+(defun validDirectionToMove (board finalCoordinates)
+	(filterColumns (filterRows board (+ (length board) 1) (first finalCoordinates)) (+ (length board) 1) (first (rest finalCoordinates))))
+
 
 ;; Returns row with updated piece at specific column index
 (defun updateColumn (row boardlength columnIndex piece)
@@ -401,7 +407,8 @@
 				(format t "Board: ~S ~%" (fileBoardToGameBoard board))
 				(format t "Next Player: ~D ~%" nextPlayer)
 
-				(cons (cons roundNum computerScore) (fileColorToGameColor computerColor))
+				;; Make players list. Append Board to it. Append next player.
+				(append (append (list (list 'computer (fileColorToGameColor computerColor) 'human (fileColorToGameColor humanColor))) (list (fileBoardToGameBoard board))) nextPlayer)
 		)))
 	;; (let* (	( inFile (open "game.txt" :direction :input :if-does-not-exist nil))
 	;; 		(print (read-line inFile ))
@@ -434,11 +441,20 @@
 				(playerColor (getPlayerColor players currentTurn)))
 		(cond 	((string= (first choice) 'save)
 							(print "Saving game"))
-						((string= (first choice) 'play)
-							(let*( (coordinates (append (readHumanRow) (readHumanColumn) ))
-								   (finalCoordinates (readHumanDirection coordinates)))
-									(validPieceToMove board coordinates)
-									;;(validDirectionToMove))
+
+				;; Play game logic		
+				((string= (first choice) 'play)
+							;; get original coordinates
+					(let*( (coordinates (append (readHumanRow) (readHumanColumn) ))
+							;; get final coordinates
+							(finalCoordinates (readHumanDirection coordinates))
+							;; checks if the piece at coordinates is equal to the player color
+							(isValidPiece (validPieceToMove board coordinates))
+							;; checks if the piece at new coordinates is "+"
+							(isValidDirection (validDirectionToMove board finalCoordinates)))
+							(format t "start coordinates ~S" coordinates)
+							(format t "final coordinates ~S" finalCoordinates)
+							(cond ( (AND (string= isValidPiece playerColor) (string= isValidDirection "+") )   
 									(cond 
 									;; if the current player is last in players, next in players
 									((string= currentTurn (first (rest (rest players))) )
@@ -446,7 +462,10 @@
 									;; if current player is first players, then next in players
 									((string= currentTurn (first players))
 										(playRound players (updateBoard board coordinates finalCoordinates (list playerColor)) (first (rest (rest players))))))
-									))
+									)
+								  (t
+								  	(princ "Not a valid move. Try again.") 
+								  	(playRound players board currentTurn)))))
 								((string= (first choice) 'help)
 									(print "Asking for help"))
 								((string= (first choice) 'quit)
@@ -462,7 +481,8 @@
 				
 			
 			)
-				(print gameSave)
+				;; Start round from file save.			
+				(playRound (first gameSave) (first (rest gameSave)) (rest (rest gameSave)))
 			
 			))
 
