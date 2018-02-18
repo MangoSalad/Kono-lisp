@@ -338,13 +338,45 @@
 ;; Source Code for serialization 
 ;; ********************************************* */
 
+;;(defun fileExists()
+	;;probe
+;;)
+
+;; Converts color identifies (black/white) in file to ones used in game (b/w).
+(defun fileColorToGameColor (color)
+	(cond 	((string= color "BLACK")
+			'b)
+			((string= color "WHITE")
+			'w)))
+
+(defun fileBoardToGameBoard (board))
+	
+
 ;; Return list of players, board, current player
-;; (defun openFile()
-;; 	(let* (	( inFile (open "game.txt" :direction :input :if-does-not-exist nil))
-;; 			(print (read-line inFile ))
-;; 																				)
-;; 			(close inFile)))
-;; (print (openFile))
+(defun openFile()
+	(with-open-file (stream "game.txt" :direction :input :if-does-not-exist nil)
+		(let* ( (file (read stream nil))
+				(roundNum (first file))
+				(computerScore (first (rest file)))
+				(computerColor (first (rest (rest file))))
+				(humanScore (first (rest (rest (rest file)))))
+				(humanColor (first (rest (rest (rest (rest file))))))
+				(board (first (rest (rest (rest (rest (rest file)))))))
+				(nextPlayer (first (rest (rest (rest (rest (rest (rest file))))))))
+				)
+
+				(format t "Round Number: ~D ~%" roundNum)
+				(format t "Computer Score: ~D ~%" computerScore)
+				(format t "Computer Color: ~D ~%" (fileColorToGameColor computerColor))
+				(format t "Human Score: ~D ~%" humanScore)
+				(format t "Human Color: ~D ~%" (fileColorToGameColor humanColor))
+				(format t "Board: ~S ~%" board)
+				(format t "Next Player: ~D ~%" nextPlayer)
+				(print file))))
+	;; (let* (	( inFile (open "game.txt" :direction :input :if-does-not-exist nil))
+	;; 		(print (read-line inFile ))
+	;; 																			)
+	;; 		(close inFile)))
 
 (defun getPlayerColor (players currentTurn)
 	(cond 	(	(string= currentTurn (first (rest (rest players))) )
@@ -392,22 +424,22 @@
 									(Quit)))))
 		;; Logic for updating board state, and next player
 		
-
+(openFile)
 ;; init game new
-(let* 	(	;; User is asked to resume game from text file.
-			(fileChoice (readPlayFromFile))
-			;; User is asked for board size at the start of round.
-			(boardSize (readBoardSize))
-			;; Creates board using n size.
-			(board (makeBoard boardSize boardSize))
-			;; choose first player and board.
-			(players (chooseColor (choosefirstPlayer))))
+;; (let* 	(	;; User is asked to resume game from text file.
+;; 			(fileChoice (readPlayFromFile))
+;; 			;; User is asked for board size at the start of round.
+;; 			(boardSize (readBoardSize))
+;; 			;; Creates board using n size.
+;; 			(board (makeBoard boardSize boardSize))
+;; 			;; choose first player and board.
+;; 			(players (chooseColor (choosefirstPlayer))))
 			
-			(format t "~A is ~A. ~%" (first players) (first (rest players)))
-			(format t "~A is ~A. ~%" (first (rest (rest players))) (first (rest (rest (rest players)))))
-			(playRound players board (first players))
+;; 			(format t "~A is ~A. ~%" (first players) (first (rest players)))
+;; 			(format t "~A is ~A. ~%" (first (rest (rest players))) (first (rest (rest (rest players)))))
+;; 			(playRound players board (first players))
 			
-			)
+;; 			)
 
 ;; /* *********************************************
 ;; Source Code to help the computer win the game
