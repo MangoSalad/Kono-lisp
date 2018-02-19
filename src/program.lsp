@@ -577,22 +577,25 @@
 (defun announceScores (player score)
 	(format t "~A scored ~S points. ~%" player score))
 
+(defun calculateWinner (playerOne scoreOne playerTwo scoreTwo)
+	(cond 	((> scoreOne scoreTwo)
+				(list playerOne (- scoreOne scoreTwo)))
+			((< scoreOne scoreTwo)
+				(list playerTwo (- scoreTwo scoreOne)))))
+
 ;; Gets the winner for the round
+;; Returns list - player who won, difference in points to be awareded
 (defun getWinner(board players)
 	(let* ( (scores (calculateScores (flatten board) (length board))))
 			;; if first player is white, announce the white score
 			(cond 	((string= (first (rest players)) "W")
-						(announceScores (first players) (first scores)))
+						(announceScores (first players) (first scores))
+						(announceScores (first (rest (rest players))) (first (rest scores)))
+						(calculateWinner (first players) (first scores) (first (rest (rest players))) (first (rest scores))))
 					((string= (first (rest players)) "B")
-						(announceScores (first players) (first (rest scores))))
-			)
-			(cond 	((string= (first (rest (rest (rest players)))) "W")
-						(announceScores (first (rest (rest players))) (first scores)))
-					((string= (first (rest (rest (rest players)))) "B")
-						(announceScores (first (rest (rest players))) (first (rest scores))))
-			)))
-
-			
+						(announceScores (first players) (first (rest scores)))
+						(announceScores (first (rest (rest players))) (first scores))
+						(calculateWinner (first players) (first (rest scores)) (first (rest (rest players))) (first scores))))))
 
 (defun tournamentControl (prevWinner scores)
 	(print "inTournamnetControl"))
@@ -615,7 +618,7 @@
 		
 		;; check if there is a winner
 		(cond 	((eq (checkwinner board) t)
-				(getWinner board players)))
+				(format t "~A won and is awarded ~S points ~%" (first (getWinner board players)) (first (rest (getWinner board players))))))
 				;;Announce winner and score
 				;;start new round
 
