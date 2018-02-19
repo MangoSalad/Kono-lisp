@@ -458,15 +458,28 @@
 			(t 
 			(getWhiteSide (rest board) boardlength numBlack (+ index 1)))))
 
+;; Returns number of remaining white pieces that have yet to capture the black side.
+(defun getBlackSide (board boardlength numWhite index)
+	;;(format t "~S ~S ~S ~%" (first board) index (* boardlength (- boardlength 2)))
+	(cond 	((eq (first board) nil)
+			numWhite)
+			((AND (>= index (* boardlength (- boardlength 1))) (string= (first board) "W"))
+			(getBlackSide (rest board) boardlength (- numWhite 1) (+ index 1)))
+			((AND (= index (* boardlength (- boardlength 2))) (string= (first board) "W"))
+			(getBlackSide (rest board) boardlength (- numWhite 1) (+ index 1)))
+			((AND (= index (+ (* boardlength (- boardlength 2)) 1)) (string= (first board) "W"))
+			(getBlackSide (rest board) boardlength (- numWhite 1) (+ index 1)))
+			(t 
+			(getBlackSide (rest board) boardlength numWhite (+ index 1)))))
+
 ;; checks if there is a winner 
 (defun checkwinner(board)
-	;;(print (eq (rest ()) NIL))
-	;;(print (getCountofBlack (flatten board) 0))
-	;;(print (getCountofWhite (flatten board) 0))
-	(format t "Number of black: ~S ~%" (getCountofBlack (flatten board) 0))
-	(print (flatten board))
-	(print (getWhiteSide (flatten board) (length board) (getCountofBlack (flatten board) 0) 1))
-	(print "Checking winner"))
+	(cond 	((getWhiteSide (flatten board) (length board) (getCountofBlack (flatten board) 0) 1)
+			t)
+			((getBlackSide (flatten board) (length board) (getCountOfWhite (flatten board) 0) 1)
+			t)
+			(t 
+				())))
 
 ;; /* ********************************************************************* 
 ;; Function Name: playRound 
@@ -484,7 +497,12 @@
 		(format t "It is ~A's turn. ~%" currentTurn)
 		(displayBoard board 0)
 		
-		(checkwinner board)
+		;; check if there is a winner
+		(cond 	((eq (checkwinner board) t)
+				(princ  "There is a winner.")))
+				;;Announce winner and score
+				;;start new round
+
 
 		(let*( 	(choice (readMenu))
 				(playerColor (getPlayerColor players currentTurn)))

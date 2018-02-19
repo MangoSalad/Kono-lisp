@@ -17,8 +17,8 @@
    ; Board:
    ( ( B  B  B  B  B )
      ( B  O  O  O  B )
-     ( O  O  O  W  O )
-     ( W  O  O  O  O )
+     ( O  O  O  O  O )
+     ( W  O  O  O  W )
      ( W  W  W  W  W ) )
 
    ; Next Player:
