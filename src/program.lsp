@@ -474,7 +474,7 @@
 (defun checkwinner(board)
 	(cond 	((getWhiteSide (flatten board) (length board) (getCountofBlack (flatten board) 0) 1)
 			t)
-			((getBlackSide (flatten board) (length board) (getCountOfWhite (flatten board) 0) 1)
+			((getBlackSide (flatten board) (length board) (getCountofWhite (flatten board) 0) 1)
 			t)
 			(t 
 				())))
@@ -524,7 +524,6 @@
 			(countBlackScore (rest board) boardlength score (+ index 1)))))
 
 (defun countWhiteScore (board boardlength score index)
-	(format t "~S ~S ~S ~%" (first board) index boardlength)
 	(cond 	((eq (first board) nil)
 			score)
 			((AND (= index (+ (* boardlength (- boardlength 1)) 1)) (string= (first board) "W"))
@@ -570,15 +569,30 @@
 
 ;; Calculates scores for computer and human
 (defun calculateScores (board boardlength)
-	(print (countWhiteScore board boardlength 0 1)))
+	;; Return white score and black score in that order.
+	(list (+ (countWhiteScore board boardlength 0 1) (* (- (+ boardlength 2) (getCountOfBlack board 0)) 5))
+	(+ (countBlackScore board boardlength 0 1) (* (- (+ boardlength 2) (getCountofWhite board 0)) 5))))
 
 ;; Announces scores for computer and human
-(defun announceScores ()
-	(print "announceScores"))
+(defun announceScores (player score)
+	(format t "~A scored ~S points. ~%" player score))
 
 ;; Gets the winner for the round
-(defun getWinner(board)
-	(calculateScores (flatten board) (length board)))
+(defun getWinner(board players)
+	(let* ( (scores (calculateScores (flatten board) (length board))))
+			;; if first player is white, announce the white score
+			(cond 	((string= (first (rest players)) "W")
+						(announceScores (first players) (first scores)))
+					((string= (first (rest players)) "B")
+						(announceScores (first players) (first (rest scores))))
+			)
+			(cond 	((string= (first (rest (rest (rest players)))) "W")
+						(announceScores (first (rest (rest players))) (first scores)))
+					((string= (first (rest (rest (rest players)))) "B")
+						(announceScores (first (rest (rest players))) (first (rest scores))))
+			)))
+
+			
 
 (defun tournamentControl (prevWinner scores)
 	(print "inTournamnetControl"))
@@ -601,7 +615,7 @@
 		
 		;; check if there is a winner
 		(cond 	((eq (checkwinner board) t)
-				(getWinner board)))
+				(getWinner board players)))
 				;;Announce winner and score
 				;;start new round
 
