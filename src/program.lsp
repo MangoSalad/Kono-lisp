@@ -421,6 +421,49 @@
 			(	(string= currentTurn (first players))
 				(first (rest players)))))
 
+;; Help from internet
+;; https://stackoverflow.com/questions/2680864/how-to-remove-nested-parentheses-in-lisp#4066110
+(defun flatten (l)
+  (cond ((null l) nil)
+        ((atom (car l)) (cons (car l) (flatten (cdr l))))
+        (t (append (flatten (car l)) (flatten (cdr l))))))
+
+;; Get the # of remaining black pieces on the board.
+(defun getCountofBlack (board count)
+	(cond   ((eq (first board) nil)
+			count)
+			((string= (first board) "B")
+			(getCountOfBlack (rest board) (+ count 1)))
+			(t 
+			(getCountOfBlack (rest board) count))))
+
+;; Get the # of remaining white pieces on the board.
+(defun getCountofWhite (board count)
+	(cond   ((eq (first board) nil)
+			count)
+			((string= (first board) "W")
+			(getCountofWhite (rest board) (+ count 1)))
+			(t 
+			(getCountofWhite (rest board) count))))
+
+;; Returns number of remaining black pieces that have yet to capture the white side.
+(defun getWhiteSide (board boardlength numBlack index)
+	(cond 	((eq (first board) nil)
+			numBlack)
+			((AND (< index boardlength) (string= (first board) "B"))
+			(getWhiteSide (rest board) boardlength (- numBlack 1) (+ index 1)))
+			(t 
+			(getWhiteSide (rest board) boardlength numBlack (+ index 1)))))
+
+;; checks if there is a winner 
+(defun checkwinner(board)
+	;;(print (eq (rest ()) NIL))
+	;;(print (getCountofBlack (flatten board) 0))
+	;;(print (getCountofWhite (flatten board) 0))
+	(print (flatten board))
+	(print (getWhiteSide (flatten board) (length board) (getCountofBlack (flatten board) 0) 0))
+	(print "Checking winner"))
+
 ;; /* ********************************************************************* 
 ;; Function Name: playRound 
 ;; Purpose: Logic for the round. Alternates each player for the turn and holds board state.
@@ -436,7 +479,9 @@
 (defun playRound (players board currentTurn)
 		(format t "It is ~A's turn. ~%" currentTurn)
 		(displayBoard board 0)
-		;;(check winner)
+		
+		(checkwinner board)
+
 		(let*( 	(choice (readMenu))
 				(playerColor (getPlayerColor players currentTurn)))
 		(cond 	((string= (first choice) 'save)

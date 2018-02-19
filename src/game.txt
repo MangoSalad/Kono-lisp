@@ -15,10 +15,10 @@
    White
 
    ; Board:
-   ( ( O  W  O  O  W )
+   ( ( B  W  B  O  W )
      ( O  O  W  W  W )
-     ( W  W  B  B  O )
-     ( B  B  B  O  O )
+     ( W  W  O  B  O )
+     ( B  B  O  O  O )
      ( O  B  O  O  B ) )
 
    ; Next Player:
