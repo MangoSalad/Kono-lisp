@@ -448,7 +448,6 @@
 
 ;; Returns number of remaining black pieces that have yet to capture the white side.
 (defun getWhiteSide (board boardlength numBlack index)
-	;;(format t "~S ~S ~S ~%" (first board) index (* boardlength 2))
 	(cond 	((eq (first board) nil)
 			numBlack)
 			((AND (<= index (+ boardlength 1)) (string= (first board) "B"))
@@ -460,7 +459,6 @@
 
 ;; Returns number of remaining white pieces that have yet to capture the black side.
 (defun getBlackSide (board boardlength numWhite index)
-	;;(format t "~S ~S ~S ~%" (first board) index (* boardlength (- boardlength 2)))
 	(cond 	((eq (first board) nil)
 			numWhite)
 			((AND (>= index (* boardlength (- boardlength 1))) (string= (first board) "W"))
@@ -481,6 +479,110 @@
 			(t 
 				())))
 
+(defun countBlackScore (board boardlength score index)
+	(cond 	((eq (first board) nil)
+			score)
+			((AND (= index 1) (string= (first board) "B"))
+				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
+			((AND (= index 2) (string= (first board) "B"))
+				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (= index 3) (string= (first board) "B"))
+				(countBlackScore (rest board) boardlength (+ score 5) (+ index 1)))
+			;; board size is 5
+			((AND (AND (= index 4) (string= (first board) "B")) (= boardlength 5))
+				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (AND (= index 5) (string= (first board) "B")) (= boardlength 5))
+				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
+			;; board size is 7
+			((AND (AND (= index 4) (string= (first board) "B")) (= boardlength 7))
+				(countBlackScore (rest board) boardlength (+ score 7) (+ index 1)))
+			((AND (AND (= index 5) (string= (first board) "B")) (= boardlength 7))
+				(countBlackScore (rest board) boardlength (+ score 5) (+ index 1)))
+			((AND (AND (= index 6) (string= (first board) "B")) (= boardlength 7))
+				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (AND (= index 7) (string= (first board) "B")) (= boardlength 7))
+				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
+			;; board size is 9
+			((AND (AND (= index 4) (string= (first board) "B")) (= boardlength 9))
+				(countBlackScore (rest board) boardlength (+ score 7) (+ index 1)))
+			((AND (AND (= index 5) (string= (first board) "B")) (= boardlength 9))
+				(countBlackScore (rest board) boardlength (+ score 9) (+ index 1)))
+			((AND (AND (= index 6) (string= (first board) "B")) (= boardlength 9))
+				(countBlackScore (rest board) boardlength (+ score 7) (+ index 1)))
+			((AND (AND (= index 7) (string= (first board) "B")) (= boardlength 9))
+				(countBlackScore (rest board) boardlength (+ score 5) (+ index 1)))
+			((AND (AND (= index 8) (string= (first board) "B")) (= boardlength 9))
+				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (AND (= index 9) (string= (first board) "B")) (= boardlength 9))
+				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
+			;; row 2
+			((AND (= index (+ boardlength 1)) (string= (first board) "B"))
+				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (= index (* boardlength 2)) (string= (first board) "B"))
+				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
+			(t 
+			(countBlackScore (rest board) boardlength score (+ index 1)))))
+
+(defun countWhiteScore (board boardlength score index)
+	(format t "~S ~S ~S ~%" (first board) index boardlength)
+	(cond 	((eq (first board) nil)
+			score)
+			((AND (= index (+ (* boardlength (- boardlength 1)) 1)) (string= (first board) "W"))
+				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
+			((AND (= index (+ (* boardlength (- boardlength 1)) 2)) (string= (first board) "W"))
+				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (= index (+ (* boardlength (- boardlength 1)) 3)) (string= (first board) "W"))
+				(countWhiteScore (rest board) boardlength (+ score 5) (+ index 1)))
+			;; board size is 5
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (string= (first board) "W")) (= boardlength 5))
+				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 5)) (string= (first board) "W")) (= boardlength 5))
+				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
+			;; board size is 7
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (string= (first board) "W")) (= boardlength 7))
+				(countWhiteScore (rest board) boardlength (+ score 7) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 5)) (string= (first board) "W")) (= boardlength 7))
+				(countWhiteScore (rest board) boardlength (+ score 5) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 6)) (string= (first board) "W")) (= boardlength 7))
+				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 7)) (string= (first board) "W")) (= boardlength 7))
+				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
+			;; board size is 9
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (string= (first board) "W")) (= boardlength 9))
+				(countWhiteScore (rest board) boardlength (+ score 7) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 5)) (string= (first board) "W")) (= boardlength 9))
+				(countWhiteScore (rest board) boardlength (+ score 9) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 6)) (string= (first board) "W")) (= boardlength 9))
+				(countWhiteScore (rest board) boardlength (+ score 7) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 7)) (string= (first board) "W")) (= boardlength 9))
+				(countWhiteScore (rest board) boardlength (+ score 5) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 8)) (string= (first board) "W")) (= boardlength 9))
+				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 9)) (string= (first board) "W")) (= boardlength 9))
+				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
+			;; row 2
+			((AND (= index (* boardlength (- boardlength 1))) (string= (first board) "W"))
+				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (= index (+ (* boardlength (- boardlength 2)) 1)) (string= (first board) "W"))
+				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
+			(t 
+			(countWhiteScore (rest board) boardlength score (+ index 1)))))
+
+;; Calculates scores for computer and human
+(defun calculateScores (board boardlength)
+	(print (countWhiteScore board boardlength 0 1)))
+
+;; Announces scores for computer and human
+(defun announceScores ()
+	(print "announceScores"))
+
+;; Gets the winner for the round
+(defun getWinner(board)
+	(calculateScores (flatten board) (length board)))
+
+(defun tournamentControl (prevWinner scores)
+	(print "inTournamnetControl"))
+
 ;; /* ********************************************************************* 
 ;; Function Name: playRound 
 ;; Purpose: Logic for the round. Alternates each player for the turn and holds board state.
@@ -499,7 +601,7 @@
 		
 		;; check if there is a winner
 		(cond 	((eq (checkwinner board) t)
-				(princ  "There is a winner.")))
+				(getWinner board)))
 				;;Announce winner and score
 				;;start new round
 
