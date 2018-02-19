@@ -448,9 +448,12 @@
 
 ;; Returns number of remaining black pieces that have yet to capture the white side.
 (defun getWhiteSide (board boardlength numBlack index)
+	;;(format t "~S ~S ~S ~%" (first board) index (* boardlength 2))
 	(cond 	((eq (first board) nil)
 			numBlack)
-			((AND (< index boardlength) (string= (first board) "B"))
+			((AND (<= index (+ boardlength 1)) (string= (first board) "B"))
+			(getWhiteSide (rest board) boardlength (- numBlack 1) (+ index 1)))
+			((AND (= index (* boardlength 2)) (string= (first board) "B"))
 			(getWhiteSide (rest board) boardlength (- numBlack 1) (+ index 1)))
 			(t 
 			(getWhiteSide (rest board) boardlength numBlack (+ index 1)))))
@@ -460,8 +463,9 @@
 	;;(print (eq (rest ()) NIL))
 	;;(print (getCountofBlack (flatten board) 0))
 	;;(print (getCountofWhite (flatten board) 0))
+	(format t "Number of black: ~S ~%" (getCountofBlack (flatten board) 0))
 	(print (flatten board))
-	(print (getWhiteSide (flatten board) (length board) (getCountofBlack (flatten board) 0) 0))
+	(print (getWhiteSide (flatten board) (length board) (getCountofBlack (flatten board) 0) 1))
 	(print "Checking winner"))
 
 ;; /* ********************************************************************* 

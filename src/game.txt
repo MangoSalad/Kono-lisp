@@ -15,11 +15,11 @@
    White
 
    ; Board:
-   ( ( B  W  B  O  W )
-     ( O  O  W  W  W )
-     ( W  W  O  B  O )
-     ( B  B  O  O  O )
-     ( O  B  O  O  B ) )
+   ( ( B  B  B  B  B )
+     ( B  O  O  O  B )
+     ( O  O  O  W  O )
+     ( W  O  O  O  O )
+     ( W  W  W  W  W ) )
 
    ; Next Player:
    Human
