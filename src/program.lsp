@@ -684,12 +684,18 @@
              ((null l) '())
              (T (append (rev (cdr l)) (list (car l))))))
 
+;; return list with closest opponent coordinates
 (defun getClosestOpponent (board boardlength opponentColor index)	
-	(print board)
-	(cond   ((string= (first board) "W")
-				(print (ceiling index boardlength)))
-			(t 
-				(getClosestOpponent (rest board) boardlength opponentColor (+ index 1))))
+	(cond ((string= opponentColor "W")
+			(cond   ((string= (first board) "W")
+						(list (- (+ boardlength 1) (ceiling index boardlength)) (- (+ boardlength 1) (rem index boardlength))))
+					(t 
+						(getClosestOpponent (rest board) boardlength opponentColor (+ index 1)))))
+			((string= opponentColor "B")
+			(cond   ((string= (first board) "B")
+					(list (ceiling index boardlength) (rem index boardlength)))
+				(t 
+					(getClosestOpponent (rest board) boardlength opponentColor (+ index 1))))))
 )
 	;;coordinate will be Coord mod boardlength and coord remainder bordlength)
 
@@ -700,6 +706,7 @@
 						(getClosestOpponent (rev (flatten board)) (length board) opponentColor 1))
 					  ((string= opponentColor "B")
 					  	(getClosestOpponent (flatten board) (length board) opponentColor 1)))))
+		(print opponentCoordinates)
 		(print "computer strategy")))
 
 ;; /* ********************************************************************* 

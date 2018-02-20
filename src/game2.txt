@@ -6,19 +6,19 @@
    17
 
    ; Computer Color:
-   Black
+   White
 
    ; Human Score:
    14
 
    ; Human Color:
-   White
+   Black
 
    ; Board:
    ( ( O  W  O  O  W )
-     ( O  O  W  W  W )
-     ( W  O  B  B  O )
-     ( B  B  B  W  O )
+     ( O  W  O  O  O )
+     ( O  W  O  O  O )
+     ( B  B  B  O  O )
      ( O  B  O  O  B ) )
 
    ; Next Player:
