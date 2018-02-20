@@ -490,11 +490,11 @@
 
 ;; checks if there is a winner 
 (defun checkwinner(board)
-	(cond 	((getWhiteSide (flatten board) (length board) (getCountofBlack (flatten board) 0) 1)
+	(cond 	((= (getWhiteSide (flatten board) (length board) (getCountofBlack (flatten board) 0) 1) 0)
 			t)
-			((getBlackSide (flatten board) (length board) (getCountofWhite (flatten board) 0) 1)
+			((= (getBlackSide (flatten board) (length board) (getCountofWhite (flatten board) 0) 1) 0)
 			t)
-			(t 
+			(t
 				())))
 
 (defun countBlackScore (board boardlength score index)
@@ -729,6 +729,7 @@
 				
 				))
 
+;; Starts new round after finishing old round.
 (defun newRound(scores firstPlayer)
 	(let* 	(	;; User is asked for board size at the start of round.
 				(boardSize (readBoardSize))
@@ -745,8 +746,6 @@
 				(format t "~A is ~A. ~%" (first (rest (rest players))) (first (rest (rest (rest players)))))
 
 				(playRound players board firstPlayer scores)))
-
-
 
 ;; Ask user for starting a new game or load a previous one from file.
 (let* ( (fileChoice (readPlayFromFile)))
