@@ -657,20 +657,27 @@
 ;; ********************************************************************* */
 (defun playRound (players board currentTurn scores)
 		(format t "It is ~A's turn. ~%" currentTurn)
+
+		;; Display Board.
 		(displayBoard board 0)
 		
-		;; check if there is a winner
+		;; Check if there is a winner.
 		(cond 	((eq (checkwinner board) t)
 					(let* ((roundScores (getWinner board players)))
 						(tournamentControl roundScores scores))))
-
+		
+		;; Display Menu.
 		(let*( 	(choice (readMenu))
 				(playerColor (getPlayerColor players currentTurn)))
+
+				;; Save Game choice
 		(cond 	((string= (first choice) 'save)
 							(print "Saving game"))
 
 				;; Play game logic		
 				((string= (first choice) 'play)
+					(cond ((string= currentTurn "HUMAN")
+					
 							;; get original coordinates
 					(let*( (coordinates (append (readHumanRow) (readHumanColumn) ))
 							;; get final coordinates
@@ -693,12 +700,20 @@
 								  (t
 								  	(princ "Not a valid move. Try again.") 
 								  	(playRound players board currentTurn scores)))))
-								((string= (first choice) 'help)
-									(print "Asking for help"))
-								((string= (first choice) 'quit)
-									(print "Quiting game")
-									(Quit)))))
-		;; Logic for updating board state, and next player
+							((string= currentTurn "COMPUTER")
+								(print "computer's turn")
+								;; get closests opponent, check if past halfway
+								;; try to block
+								)))
+				
+				;; Help mode.
+				((string= (first choice) 'help)
+					(print "Asking for help"))
+
+				;; Quit game.
+				((string= (first choice) 'quit)
+					(print "Quiting game")
+					(Quit)))))
 
 ;; Begins the tournament from loading game from file.
 (defun loadGame()
@@ -758,8 +773,3 @@
 ;; Source Code to help the computer win the game
 ;; ********************************************* */
 ;; // List all the relevant functions here
-
-
-
-
-
