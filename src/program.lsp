@@ -200,7 +200,12 @@
 
 ;; Checks if the new coordinates are not occuping piece and direction is not out of bounds
 (defun validDirectionToMove (board finalCoordinates)
-	(filterColumns (filterRows board (+ (length board) 1) (first finalCoordinates)) (+ (length board) 1) (first (rest finalCoordinates))))
+	(cond ((OR (<= (first finalCoordinates) 0) (<= (first (rest finalCoordinates)) 0))
+			'x)
+		  ((OR (> (first finalCoordinates) (length board)) (> (first (rest finalCoordinates)) (length board)))
+			'x)
+		  (t
+		   	(filterColumns (filterRows board (+ (length board) 1) (first finalCoordinates)) (+ (length board) 1) (first (rest finalCoordinates))))))
 
 
 ;; Returns row with updated piece at specific column index
@@ -439,6 +444,12 @@
 			(	(string= currentTurn (first players))
 				(first (rest players)))))
 
+(defun getOpponentColor (players currentTurn)
+	(cond 	(	(string= currentTurn (first (rest (rest players))) )
+				(first (rest players)))
+			(	(string= currentTurn (first players))
+				(first (rest (rest (rest players)))))))
+
 ;; Help from internet
 ;; https://stackoverflow.com/questions/2680864/how-to-remove-nested-parentheses-in-lisp#4066110
 (defun flatten (l)
@@ -643,6 +654,54 @@
 			((string= (first roundScores) "HUMAN")
 			(list 'computer (first (rest tournamentScores)) 'human (+ (first (rest (rest (rest tournamentScores)))) (first (rest roundScores)))))))
 
+;; human player strategy
+(defun playHuman (players board scores playerColor)
+	(let*( (coordinates (append (readHumanRow) (readHumanColumn) ))
+		;; get final coordinates
+		(finalCoordinates (readHumanDirection coordinates))
+		;; checks if the piece at coordinates is equal to the player color
+		(isValidPiece (validPieceToMove board coordinates))
+		;; checks if the piece at new coordinates is "+"
+		(isValidDirection (validDirectionToMove board finalCoordinates)))
+		(format t "start coordinates ~S" coordinates)
+		(format t "final coordinates ~S" finalCoordinates)
+		(cond 	((AND (string= isValidPiece playerColor) (string= isValidDirection "+") )   
+				(playRound players (updateBoard board coordinates finalCoordinates (list playerColor)) 'computer scores))
+				(t
+				(princ "Not a valid move. Try again.") 
+				(playRound players board 'human scores)))))
+
+;; /* *********************************************
+;; Source Code to help the computer win the game
+;; ********************************************* */
+;; // List all the relevant functions here
+
+;; reverse list
+;; got help on internet
+;; https://stackoverflow.com/questions/34422711/reversing-list-in-lisp#34437069
+(defun rev (l)
+           (cond
+             ((null l) '())
+             (T (append (rev (cdr l)) (list (car l))))))
+
+(defun getClosestOpponent (board boardlength opponentColor index)	
+	(print board)
+	(cond   ((string= (first board) "W")
+				(print (ceiling index boardlength)))
+			(t 
+				(getClosestOpponent (rest board) boardlength opponentColor (+ index 1))))
+)
+	;;coordinate will be Coord mod boardlength and coord remainder bordlength)
+
+(defun playComputer (players board scores playerColor opponentColor)
+	;; get opponent's coordinates
+	(let* ( (opponentCoordinates 
+				(cond ((string= opponentColor "W")
+						(getClosestOpponent (rev (flatten board)) (length board) opponentColor 1))
+					  ((string= opponentColor "B")
+					  	(getClosestOpponent (flatten board) (length board) opponentColor 1)))))
+		(print "computer strategy")))
+
 ;; /* ********************************************************************* 
 ;; Function Name: playRound 
 ;; Purpose: Logic for the round. Alternates each player for the turn and holds board state.
@@ -668,7 +727,8 @@
 		
 		;; Display Menu.
 		(let*( 	(choice (readMenu))
-				(playerColor (getPlayerColor players currentTurn)))
+				(playerColor (getPlayerColor players currentTurn))
+				(opponentColor (getOpponentColor players currentTurn)))
 
 				;; Save Game choice
 		(cond 	((string= (first choice) 'save)
@@ -676,36 +736,11 @@
 
 				;; Play game logic		
 				((string= (first choice) 'play)
-					(cond ((string= currentTurn "HUMAN")
-					
-							;; get original coordinates
-					(let*( (coordinates (append (readHumanRow) (readHumanColumn) ))
-							;; get final coordinates
-							(finalCoordinates (readHumanDirection coordinates))
-							;; checks if the piece at coordinates is equal to the player color
-							(isValidPiece (validPieceToMove board coordinates))
-							;; checks if the piece at new coordinates is "+"
-							(isValidDirection (validDirectionToMove board finalCoordinates)))
-							(format t "start coordinates ~S" coordinates)
-							(format t "final coordinates ~S" finalCoordinates)
-							(cond ( (AND (string= isValidPiece playerColor) (string= isValidDirection "+") )   
-									(cond 
-									;; if the current player is last in players, next in players
-									((string= currentTurn (first (rest (rest players))) )
-										(playRound players (updateBoard board coordinates finalCoordinates (list playerColor)) (first players) scores))
-									;; if current player is first players, then next in players
-									((string= currentTurn (first players))
-										(playRound players (updateBoard board coordinates finalCoordinates (list playerColor)) (first (rest (rest players))) scores)))
-									)
-								  (t
-								  	(princ "Not a valid move. Try again.") 
-								  	(playRound players board currentTurn scores)))))
+					(cond 	((string= currentTurn "HUMAN")
+								(playHuman players board scores playerColor))
 							((string= currentTurn "COMPUTER")
-								(print "computer's turn")
-								;; get closests opponent, check if past halfway
-								;; try to block
-								)))
-				
+								(playComputer players board scores playerColor opponentColor))))
+												
 				;; Help mode.
 				((string= (first choice) 'help)
 					(print "Asking for help"))
@@ -740,7 +775,8 @@
 				
 				(format t "~A is ~A. ~%" (first players) (first (rest players)))
 				(format t "~A is ~A. ~%" (first (rest (rest players))) (first (rest (rest (rest players)))))
-				(playRound players board (first players) (list 'computer 0 'human 0))
+				;;make human (first players)
+				(playRound players board 'human (list 'computer 0 'human 0))
 				
 				))
 
@@ -768,8 +804,3 @@
 			 	(loadGame))
 				((string= fileChoice "N")
 				(initGame))))
-
-;; /* *********************************************
-;; Source Code to help the computer win the game
-;; ********************************************* */
-;; // List all the relevant functions here
