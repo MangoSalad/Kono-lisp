@@ -244,6 +244,14 @@
 				( t 
 					(readPlayFromFile) )) )
 
+(defun validPlayAgain (choice)
+	(cond ( (string= choice "Y")
+					(print choice)  )
+				( (string= choice "N")
+					(print choice)  )
+				( t 
+					(readPlayAgain) )) )
+
 ;; Validates board size.
 (defun validBoardSize (choice)
 	(cond ( (= choice 5)
@@ -345,6 +353,10 @@
 	(terpri)
 	(validHumanDirection (read) (first coordinates) (first (rest coordinates))))
 
+(defun readPlayAgain ()
+	(princ "Do you want to play again? (Y/N): ")
+	(terpri)
+	(validPlayAgain (read)))
 
 ;; /* *********************************************
 ;; Source Code for serialization 
@@ -408,7 +420,13 @@
 				(format t "Next Player: ~D ~%" nextPlayer)
 
 				;; Make players list. Append Board to it. Append next player.
-				(append (append (list (list 'computer (fileColorToGameColor computerColor) 'human (fileColorToGameColor humanColor))) (list (fileBoardToGameBoard board))) nextPlayer)
+				(append
+				(append 
+				(append 
+				(list (list 'computer (fileColorToGameColor computerColor) 'human (fileColorToGameColor humanColor))) 
+				(list (fileBoardToGameBoard board)))
+				(list nextPlayer))
+				(list 'computer computerScore 'human humanScore))
 		)))
 	;; (let* (	( inFile (open "game.txt" :direction :input :if-does-not-exist nil))
 	;; 		(print (read-line inFile ))
@@ -573,15 +591,21 @@
 	(list (+ (countWhiteScore board boardlength 0 1) (* (- (+ boardlength 2) (getCountOfBlack board 0)) 5))
 	(+ (countBlackScore board boardlength 0 1) (* (- (+ boardlength 2) (getCountofWhite board 0)) 5))))
 
-;; Announces scores for computer and human
+;; Announces Round scores for computer and human
 (defun announceScores (player score)
 	(format t "~A scored ~S points. ~%" player score))
 
+;; include tie conclusion
 (defun calculateWinner (playerOne scoreOne playerTwo scoreTwo)
 	(cond 	((> scoreOne scoreTwo)
+				(format t "~A won and is awarded ~S points ~%" playerOne (- scoreOne scoreTwo))
 				(list playerOne (- scoreOne scoreTwo)))
 			((< scoreOne scoreTwo)
-				(list playerTwo (- scoreTwo scoreOne)))))
+				(format t "~A won and is awarded ~S points ~%" playerTwo (- scoreTwo scoreOne))
+				(list playerTwo (- scoreTwo scoreOne)))
+			((= scoreOne scoreTwo)
+				(format t "There is no clear winner. It is a draw. ~%")
+				())))
 
 ;; Gets the winner for the round
 ;; Returns list - player who won, difference in points to be awareded
@@ -597,8 +621,27 @@
 						(announceScores (first (rest (rest players))) (first scores))
 						(calculateWinner (first players) (first (rest scores)) (first (rest (rest players))) (first scores))))))
 
+;; Announces tournament scores for computer and human
+(defun announceTournamentScores (player score)
+	(format t "~A has ~S points. ~%" player score))
+
 (defun tournamentControl (prevWinner scores)
-	(print "inTournamnetControl"))
+	(let* ( (tournamentScore (calculateTournamentScore prevWinner scores)))
+			(format t "Tournament Scores: ~%")
+			(announceTournamentScores (first tournamentScore) (first (rest tournamentScore)))
+			(announceTournamentScores (first (rest (rest tournamentScore))) (first (rest (rest (rest tournamentScore)))))
+			(let* ( (playAgain (readPlayAgain)))
+				(cond 	((string= playAgain "Y")
+						(newRound tournamentScore (first prevWinner)))
+						((string= playAgain "N")
+						(Quit))))
+))
+	
+(defun calculateTournamentScore (roundScores tournamentScores)
+	(cond 	((string= (first roundScores) "COMPUTER")
+			(list 'computer (+ (first (rest tournamentScores)) (first (rest roundScores))) 'human (first (rest (rest (rest tournamentScores))))))
+			((string= (first roundScores) "HUMAN")
+			(list 'computer (first (rest tournamentScores)) 'human (+ (first (rest (rest (rest tournamentScores)))) (first (rest roundScores)))))))
 
 ;; /* ********************************************************************* 
 ;; Function Name: playRound 
@@ -612,16 +655,14 @@
 ;;             1) ...
 ;; Assistance Received: none 
 ;; ********************************************************************* */
-(defun playRound (players board currentTurn)
+(defun playRound (players board currentTurn scores)
 		(format t "It is ~A's turn. ~%" currentTurn)
 		(displayBoard board 0)
 		
 		;; check if there is a winner
 		(cond 	((eq (checkwinner board) t)
-				(format t "~A won and is awarded ~S points ~%" (first (getWinner board players)) (first (rest (getWinner board players))))))
-				;;Announce winner and score
-				;;start new round
-
+					(let* ((roundScores (getWinner board players)))
+						(tournamentControl roundScores scores))))
 
 		(let*( 	(choice (readMenu))
 				(playerColor (getPlayerColor players currentTurn)))
@@ -644,14 +685,14 @@
 									(cond 
 									;; if the current player is last in players, next in players
 									((string= currentTurn (first (rest (rest players))) )
-										(playRound players (updateBoard board coordinates finalCoordinates (list playerColor)) (first players)))
+										(playRound players (updateBoard board coordinates finalCoordinates (list playerColor)) (first players) scores))
 									;; if current player is first players, then next in players
 									((string= currentTurn (first players))
-										(playRound players (updateBoard board coordinates finalCoordinates (list playerColor)) (first (rest (rest players))))))
+										(playRound players (updateBoard board coordinates finalCoordinates (list playerColor)) (first (rest (rest players))) scores)))
 									)
 								  (t
 								  	(princ "Not a valid move. Try again.") 
-								  	(playRound players board currentTurn)))))
+								  	(playRound players board currentTurn scores)))))
 								((string= (first choice) 'help)
 									(print "Asking for help"))
 								((string= (first choice) 'quit)
@@ -668,7 +709,8 @@
 			
 			)
 				;; Start round from file save.			
-				(playRound (first gameSave) (first (rest gameSave)) (rest (rest gameSave)))
+				(print (rest (rest (rest gameSave))))
+				(playRound (first gameSave) (first (rest gameSave)) (first (rest (rest gameSave))) (rest (rest (rest gameSave))))
 			
 			))
 
@@ -683,9 +725,28 @@
 				
 				(format t "~A is ~A. ~%" (first players) (first (rest players)))
 				(format t "~A is ~A. ~%" (first (rest (rest players))) (first (rest (rest (rest players)))))
-				(playRound players board (first players))
+				(playRound players board (first players) (list 'computer 0 'human 0))
 				
 				))
+
+(defun newRound(scores firstPlayer)
+	(let* 	(	;; User is asked for board size at the start of round.
+				(boardSize (readBoardSize))
+				;; Creates board using n size.
+				(board (makeBoard boardSize boardSize))
+				
+				(players (cond 	((string= firstPlayer "COMPUTER")
+								(chooseColor (list 'computer)))
+								(t 
+								(chooseColor (list 'human))))))
+				;; choose first player and board.
+				
+				(format t "~A is ~A. ~%" (first players) (first (rest players)))
+				(format t "~A is ~A. ~%" (first (rest (rest players))) (first (rest (rest (rest players)))))
+
+				(playRound players board firstPlayer scores)))
+
+
 
 ;; Ask user for starting a new game or load a previous one from file.
 (let* ( (fileChoice (readPlayFromFile)))
