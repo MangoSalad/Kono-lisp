@@ -761,11 +761,90 @@
 				nil)
 		)))))))
 	
-(defun playDefenseWest())
+(defun playDefenseWest(board opponentCoordinates playerColor)
+	(print "Playing Defense West")
+	;; Computer is Black.
 
+	(cond ((string= playerColor "B")
+	
+		(let* (	(validFinalCoordinate (validDirectionToMove board (list (+ (first opponentCoordinates) 1) (- (first (rest opponentCoordinates)) 1)) ))
+				;; check for available piece in W
+				(blockFromWest (validPieceToMove board (list (first opponentCoordinates) (- (first (rest opponentCoordinates)) 2))))
+				;; check for available piece in SW
+				(blockFromSouthWest (validPieceToMove board (list (+ (first opponentCoordinates) 2) (- (first (rest opponentCoordinates)) 2))))
+				;; check for available piece in S
+				(blockFromSouth (validPieceToMove board (list (+ (first opponentCoordinates) 2) (first (rest opponentCoordinates)) )))
+				;; coordinates
+				(finalCoordinates (list (+ (first opponentCoordinates) 1) (- (first (rest opponentCoordinates)) 1))))
 
-(defun playAttack())
+		;; Check if the final coordinate is able to moved to, if not return nil.
+		(cond ((string/= validFinalCoordinate "+")
+				nil)
+			(
+		;; Return original coordinate and final coordinate - else send nil.
+		(cond 	((string= blockFromSouthWest "B")
+				(list (list (+ (first opponentCoordinates) 2) (- (first (rest opponentCoordinates)) 2)) finalCoordinates "northeast"))
+				((string= blockfromSouth "B")
+				(list (list (+ (first opponentCoordinates) 2) (first (rest opponentCoordinates))) finalCoordinates "northwest"))
+				((string= blockFromWest "B")
+				(list (list (first opponentCoordinates) (- (first (rest opponentCoordinates)) 2)) finalCoordinates "southeast"))
+				(t 
+				nil)
+		)))))
+
+	;; Computer is White.
+	((string= playerColor "W")
+		(let* (	(validFinalCoordinate (validDirectionToMove board (list (- (first opponentCoordinates) 1) (- (first (rest opponentCoordinates)) 1)) ))
+				;; check for available piece in W
+				(blockFromWest (validPieceToMove board (list (first opponentCoordinates) (- (first (rest opponentCoordinates)) 2))))
+				;; check for available piece in NW
+				(blockFromNorthWest (validPieceToMove board (list (- (first opponentCoordinates) 2) (- (first (rest opponentCoordinates)) 2))))
+				;; check for available piece in N
+				(blockFromNorth (validPieceToMove board (list (- (first opponentCoordinates) 2) (first (rest opponentCoordinates)) )))
+				;; coordinates
+				(finalCoordinates (list (- (first opponentCoordinates) 1) (- (first (rest opponentCoordinates)) 1))))
+
+		;; Check if the final coordinate is able to moved to, if not return nil.
+		(cond ((string/= validFinalCoordinate "+")
+				nil)
+			(
+		;; Return original coordinate and final coordinate - else send nil.
+		(cond 	((string= blockFromNorthWest "W")
+				(list (list (- (first opponentCoordinates) 2) (- (first (rest opponentCoordinates)) 2)) finalCoordinates))
+				((string= blockFromNorth "W")
+				(list (list (- (first opponentCoordinates) 2) (first (rest opponentCoordinates))) finalCoordinates))
+				((string= blockFromWest "W")
+				(list (list (first opponentCoordinates) (- (first (rest opponentCoordinates)) 2)) finalCoordinates))
+				(t 
+				nil)
+		)))))))
+
+;; Returns random piece from list of friendly available pieces.
+(defun randomPiece()
+	(+ 2 (random 11)))
+	
+;; Returns a list of friendly available pieces.
+(defun getFriendlyPieces(board boardlength playerColor index) 
+	;; if board has been went thru, return empty list
+	(cond ((eq (first board) nil)
+			())
+		  ((string= (first board) playerColor)
+			(append (list (list (ceiling index boardlength) (cond ((= (rem index boardlength) 0) boardlength) (t (rem index boardlength)))))
+			(getFriendlyPieces (rest board) boardlength playerColor (+ index 1))))
+		  (t
+		  	(getFriendlyPieces (rest board) boardlength playerColor (+ index 1)))))
+	;; append coordinates to list
+
+(defun playAttack(board playerColor)
+	(print "Playing Attack"))
+
 (defun playCapture())
+
+
+(defun displayDefense (originalCoordinates finalCoordinates direction)
+	(format t "The computer moved the piece at (~S,~S) ~A. ~%" )
+	(format t "It wanted to block the human piece at (~S,~S). ~%")
+)
 
 (defun playComputer (players board scores playerColor opponentColor)
 	;; get opponent's coordinates
@@ -776,6 +855,9 @@
 					  	(getClosestOpponent (flatten board) (length board) opponentColor 1)))))
 		(print opponentCoordinates)
 		(print (playDefenseEast board opponentCoordinates playerColor))
+		(print (playDefenseWest board opponentCoordinates playerColor))
+		(print (getFriendlyPieces (flatten board) (length board) playerColor 1))
+		(print (playAttack board playerColor))
 		(print "computer strategy")))
 
 ;; /* ********************************************************************* 
