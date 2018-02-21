@@ -195,8 +195,12 @@
 (defun validPieceToMove (board coordinates)
 	;;rest thru rows,
 	;; rest thru columns, 
-	(print "in validpiecetomove")
-	(filterColumns (filterRows board (+ (length board) 1) (first coordinates)) (+ (length board) 1) (first (rest coordinates))))
+	(cond ((OR (<= (first coordinates) 0) (<= (first (rest coordinates)) 0))
+			'x)
+		  ((OR (> (first coordinates) (length board)) (> (first (rest coordinates)) (length board)))
+			'x)
+		  (t
+			(filterColumns (filterRows board (+ (length board) 1) (first coordinates)) (+ (length board) 1) (first (rest coordinates))))))
 
 ;; Checks if the new coordinates are not occuping piece and direction is not out of bounds
 (defun validDirectionToMove (board finalCoordinates)
@@ -688,16 +692,80 @@
 (defun getClosestOpponent (board boardlength opponentColor index)	
 	(cond ((string= opponentColor "W")
 			(cond   ((string= (first board) "W")
-						(list (- (+ boardlength 1) (ceiling index boardlength)) (- (+ boardlength 1) (rem index boardlength))))
+						(list (- (+ boardlength 1) (ceiling index boardlength)) (- (+ boardlength 1) (cond ((= (rem index boardlength) 0) boardlength) (t (rem index boardlength))))))
 					(t 
 						(getClosestOpponent (rest board) boardlength opponentColor (+ index 1)))))
 			((string= opponentColor "B")
 			(cond   ((string= (first board) "B")
-					(list (ceiling index boardlength) (rem index boardlength)))
+					(list (ceiling index boardlength) (cond ((= (rem index boardlength) 0) boardlength) (t (rem index boardlength)))))
 				(t 
 					(getClosestOpponent (rest board) boardlength opponentColor (+ index 1))))))
 )
-	;;coordinate will be Coord mod boardlength and coord remainder bordlength)
+
+;; check if can block from east, if so, return original coordinates and new coordinates
+(defun playDefenseEast(board opponentCoordinates playerColor)
+	(print "Playing Defense East")
+	
+	;; Computer is Black.
+	(cond ((string= playerColor "B")
+	
+		(let* (	(validFinalCoordinate (validDirectionToMove board (list (+ (first opponentCoordinates) 1) (+ (first (rest opponentCoordinates)) 1)) ))
+				;; check for available piece in E
+				(blockFromEast (validPieceToMove board (list (first opponentCoordinates) (+ (first (rest opponentCoordinates)) 2))))
+				;; check for available piece in SE
+				(blockFromSouthEast (validPieceToMove board (list (+ (first opponentCoordinates) 2) (+ (first (rest opponentCoordinates)) 2))))
+				;; check for available piece in S
+				(blockFromSouth (validPieceToMove board (list (+ (first opponentCoordinates) 2) (first (rest opponentCoordinates)) )))
+				;; coordinates
+				(finalCoordinates (list (+ (first opponentCoordinates) 1) (+ (first (rest opponentCoordinates)) 1))))
+
+		;; Check if the final coordinate is able to moved to, if not return nil.
+		(cond ((string/= validFinalCoordinate "+")
+				nil)
+			(
+		;; Return original coordinate and final coordinate - else send nil.
+		(cond 	((string= blockFromSouthEast "B")
+				(list (list (+ (first opponentCoordinates) 2) (+ (first (rest opponentCoordinates)) 2)) finalCoordinates))
+				((string= blockfromSouth "B")
+				(list (list (+ (first opponentCoordinates) 2) (first (rest opponentCoordinates))) finalCoordinates))
+				((string= blockFromEast "B")
+				(list (list (first opponentCoordinates) (+ (first (rest opponentCoordinates)) 2)) finalCoordinates))
+				(t 
+				nil)
+		)))))
+
+	;; Computer is White.
+	((string= playerColor "W")
+		(let* (	(validFinalCoordinate (validDirectionToMove board (list (- (first opponentCoordinates) 1) (+ (first (rest opponentCoordinates)) 1)) ))
+				;; check for available piece in E
+				(blockFromEast (validPieceToMove board (list (first opponentCoordinates) (+ (first (rest opponentCoordinates)) 2))))
+				;; check for available piece in NE
+				(blockFromNorthEast (validPieceToMove board (list (- (first opponentCoordinates) 2) (+ (first (rest opponentCoordinates)) 2))))
+				;; check for available piece in N
+				(blockFromNorth (validPieceToMove board (list (- (first opponentCoordinates) 2) (first (rest opponentCoordinates)) )))
+				;; coordinates
+				(finalCoordinates (list (- (first opponentCoordinates) 1) (+ (first (rest opponentCoordinates)) 1))))
+
+		;; Check if the final coordinate is able to moved to, if not return nil.
+		(cond ((string/= validFinalCoordinate "+")
+				nil)
+			(
+		;; Return original coordinate and final coordinate - else send nil.
+		(cond 	((string= blockFromNorthEast "W")
+				(list (list (- (first opponentCoordinates) 2) (+ (first (rest opponentCoordinates)) 2)) finalCoordinates))
+				((string= blockFromNorth "W")
+				(list (list (- (first opponentCoordinates) 2) (first (rest opponentCoordinates))) finalCoordinates))
+				((string= blockFromEast "W")
+				(list (list (first opponentCoordinates) (+ (first (rest opponentCoordinates)) 2)) finalCoordinates))
+				(t 
+				nil)
+		)))))))
+	
+(defun playDefenseWest())
+
+
+(defun playAttack())
+(defun playCapture())
 
 (defun playComputer (players board scores playerColor opponentColor)
 	;; get opponent's coordinates
@@ -707,6 +775,7 @@
 					  ((string= opponentColor "B")
 					  	(getClosestOpponent (flatten board) (length board) opponentColor 1)))))
 		(print opponentCoordinates)
+		(print (playDefenseEast board opponentCoordinates playerColor))
 		(print "computer strategy")))
 
 ;; /* ********************************************************************* 

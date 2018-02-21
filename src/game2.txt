@@ -15,11 +15,11 @@
    Black
 
    ; Board:
-   ( ( O  W  O  O  W )
-     ( O  W  O  O  O )
-     ( O  W  O  O  O )
-     ( B  B  B  O  O )
-     ( O  B  O  O  B ) )
+   ( ( W  W  W  W  W )
+     ( O  O  O  O  W )
+     ( O  W  O  O  B )
+     ( B  O  O  O  O )
+     ( B  O  B  O  B ) )
 
    ; Next Player:
    Computer
