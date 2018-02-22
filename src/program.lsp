@@ -119,27 +119,27 @@
 				()             )
 				;; First row is white.
 				((= row 1)
-					(append (list 'w)
+					(append (list "W")
 					(makeRowForBoard (- column 1) row boardSize) )
 				)
 				;; Place white pieces on second row.
 				((and (= row 2) (OR (= column 1) (= column boardSize)))
-					(append (list 'w)
+					(append (list "W")
 					(makeRowForBoard (- column 1) row boardSize) )
 				)
 				;; Place black pieces on last row
 				((= row boardSize)
-					(append (list 'b)
+					(append (list "B")
 					(makeRowForBoard (- column 1) row boardSize) )        
 				)
 				;; Place black pieces on second to last row
 				((and (= row (- boardSize 1)) (OR (= column 1) (= column boardSize)))
-					(append (list 'b)
+					(append (list "B")
 					(makeRowForBoard (- column 1) row boardSize) )
 				)
 				;; Place regular + pieces
 				(t 
-				(append (list '+)
+				(append (list "+")
 				(makeRowForBoard (- column 1) row boardSize) )  )))
 
 ;; /* ********************************************************************* 
@@ -173,7 +173,7 @@
 					(format t "~D ~%" 'N)
 					(displayBoard board (+ boardlength 1)))
 				(t 
-					 (format t "~D ~S ~%" boardlength (first board))
+					 (format t "~D ~A ~%" boardlength (first board))
 					 (displayBoard (rest board) (+ boardlength 1))
 					 (format t "~D " (length board))
 				)))
@@ -475,6 +475,12 @@
 			(	(string= currentTurn (first players))
 				(first (rest players)))))
 
+;; gets opposite player color given player
+(defun getOppositePlayerColor (playerColor)
+	(cond 	(	(string= player "W") 
+				'B)
+			(	(string= player "B")
+				'W)))
 ;; get next player
 (defun getNextPlayer (players currentTurn)
 	(cond 	(	(string= currentTurn (first (rest (rest players))) )
@@ -877,34 +883,78 @@
 		  	(getFriendlyPieces (rest board) boardlength playerColor (+ index 1)))))
 	;; append coordinates to list
 
-(defun playAttack(board playerColor listOfPieces)
+(defun makeAttackDecision(board playerColor friendlyPiece)
 	(cond ((string= playerColor "B")
-		(let* (	
-				(friendlyPiece (getRandomPiece listOfPieces (randomPiece listOfPieces)))
-				;; Valid direction to move northeast.
-				(validNorthEast (validDirectionToMove board (list (- (first friendlyPiece) 1) (+ (first (rest friendlyPiece)) 1)) ))
-				;; Valid direction to move northwest.
-				(validNorthWest (validDirectionToMove board (list (- (first friendlyPiece) 1) (- (first (rest friendlyPiece)) 1)) ))
-				;; Northeast coordinates.
-				(coordinatesNorthEast (list (- (first friendlyPiece) 1) (+ (first (rest friendlyPiece)) 1)))
-				;; Northwest coordinates
-				(coordinatesNorthWest (list (- (first friendlyPiece) 1) (- (first (rest friendlyPiece)) 1))))
+			(let* (	;; Valid direction to move northeast.
+					(validNorthEast (validDirectionToMove board (list (- (first friendlyPiece) 1) (+ (first (rest friendlyPiece)) 1)) ))
+					;; Valid direction to move northwest.
+					(validNorthWest (validDirectionToMove board (list (- (first friendlyPiece) 1) (- (first (rest friendlyPiece)) 1)) ))
+					;; Northeast coordinates.
+					(coordinatesNorthEast (list (- (first friendlyPiece) 1) (+ (first (rest friendlyPiece)) 1)))
+					;; Northwest coordinates
+					(coordinatesNorthWest (list (- (first friendlyPiece) 1) (- (first (rest friendlyPiece)) 1))))
 
-		;; Check if the final coordinate is able to moved to, if not return nil.
-		(cond ((string/= validNorthEast "+")
-				(playAttack(board playerColor listOfPieces)))
-			  ((string/= validNorthWest "+")
-				(playAttack(board playerColor listOfPieces)))
-			(
-		;; Return original coordinate and final coordinate - else send nil.
-		(cond 	((string= validNorthEast "+")
-				(list friendlyPiece coordinatesNorthEast "northeast"))
-				((string= validNorthWest "+")
-				(list friendlyPiece coordinatesNorthWest "northeast")))))))))
+			;; Check if the final coordinate is able to moved to, if not return nil.
+			(cond ((string/= validNorthEast "+")
+					nil)
+				((string/= validNorthWest "+")
+					nil)
+				(
+			;; Return original coordinate and final coordinate - else send nil.
+			(cond 	((string= validNorthEast "+")
+					(list friendlyPiece coordinatesNorthEast "northeast"))
+					((string= validNorthWest "+")
+					(list friendlyPiece coordinatesNorthWest "northwest")))))))
+		;; Computer is White.
+		  ((string= playerColor "W")
+		  	(let* (	;; Valid direction to move southeast.
+					(validSouthEast (validDirectionToMove board (list (+ (first friendlyPiece) 1) (+ (first (rest friendlyPiece)) 1)) ))
+					;; Valid direction to move southwest.
+					(validSouthWest (validDirectionToMove board (list (+ (first friendlyPiece) 1) (- (first (rest friendlyPiece)) 1)) ))
+					;; Southeast coordinates.
+					(coordinatesSouthEast (list (+ (first friendlyPiece) 1) (+ (first (rest friendlyPiece)) 1)))
+					;; Southwest coordinates
+					(coordinatesSouthWest (list (+ (first friendlyPiece) 1) (- (first (rest friendlyPiece)) 1))))
+
+			;; Check if the final coordinate is able to moved to, if not return nil.
+			(cond ((string/= validSouthEast "+")
+					nil)
+				((string/= validSouthWest "+")
+					nil)
+				(
+			;; Return original coordinate and final coordinate - else send nil.
+			(cond 	((string= validSouthEast "+")
+					(list friendlyPiece coordinatesSouthEast "southeast"))
+					((string= validSouthWest "+")
+					(list friendlyPiece coordinatesSouthWest "southwest")))))))))
 
 ;; returns coordinate of piece played and coordinate moved to
 (defun playCapture())
 	;;
+
+(defun playRetreat(board playerColor listOfPieces)
+	(let* ( (coordinates (makeAttackDecision board (getOppositePlayerColor playerColor) (getRandomPiece listOfPieces (randomPiece listOfPieces)))))
+		 (cond ((eq coordinates nil)
+		 		(playAttack board (getOppositePlayerColor playerColor) listOfPieces))
+			   (t 
+			   	coordinates))))
+
+;; Loop through list of available pieces, if none can move forward, return t
+(defun checkRetreat(board listOfPieces playerColor)
+	(cond 	((eq (first listOfPieces) nil)
+			t)
+			((not (eq (makeAttackDecision board playerColor (first listOfPieces))  nil))
+			nil)
+			(t
+			 (checkRetreat board (rest listOfPieces) playerColor))))
+
+;; Randomly pick piece to attack.
+(defun playAttack(board playerColor listOfPieces)
+	(let* ( (coordinates (makeAttackDecision board playerColor (getRandomPiece listOfPieces (randomPiece listOfPieces)))))
+		 (cond ((eq coordinates nil)
+		 		(playAttack board playerColor listOfPieces))
+			   (t 
+			   	coordinates))))
 
 
 (defun displayDefense (originalCoordinates finalCoordinates direction)
@@ -924,8 +974,8 @@
 		(print (playDefenseEast board opponentCoordinates playerColor))
 		(print (playDefenseWest board opponentCoordinates playerColor))
 		(print listOfPieces)
-		(print (getRandomPiece listOfPieces (randomPiece listOfPieces)))
 		(print (playAttack board playerColor listOfPieces))
+		(print (checkRetreat board listofPieces playerColor))
 		(print "computer strategy")))
 
 ;; /* ********************************************************************* 
