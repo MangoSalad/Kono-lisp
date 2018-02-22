@@ -942,15 +942,36 @@
 					(list friendlyPiece coordinatesSouthWest "southwest")))))))))
 
 ;; returns coordinate of piece played and coordinate moved to
-(defun playCapture())
-	;;
+(defun playCapture(board playerColor listOfPieces)
+
+	(cond ((eq (first listOfPieces) nil)
+			nil))
+
+	(let* ( (northWest (validDirectionToMove board (list (- (first (first listOfPieces)) 1) (- (first (rest (first listOfPieces))) 1))))
+			(northEast (validDirectionToMove board (list (- (first (first listOfPieces)) 1) (+ (first (rest (first listOfPieces))) 1))))
+			(southWest (validDirectionToMove board (list (+ (first (first listOfPieces)) 1) (- (first (rest (first listOfPieces))) 1))))
+			(southEast (validDirectionToMove board (list (+ (first (first listOfPieces)) 1) (+ (first (rest (first listOfPieces))) 1)))))
+		  ;; Check to move NorthWest
+	(cond 
+		  ((string=  northWest (getOppositePlayerColor playerColor))
+		  (list (first listOfPieces) northWest "northwest"))
+		  ;; Check to move NorthEast
+		  ((string=  northEast (getOppositePlayerColor playerColor))
+		  (list (first listOfPieces) northEast "northeast"))
+		  ;; Check to move SouthWest
+		  ((string=  southWest (getOppositePlayerColor playerColor))
+		  (list (first listOfPieces) southWest "southwest"))
+		  ;; Check to move SouthEast
+		  ((string=  southEast (getOppositePlayerColor playerColor))
+		  (list (first listOfPieces) southEast "southeast")))))
+		  
 
 ;; Loops through list of available pieces and returns list of super pieces
 (defun checkCapture(board playerColor listOfPieces)
 	(cond 	((eq (first listOfPieces) nil)
 			())
 			((string= (validPieceToMove board (first listOfPieces)) (getSuperPieceForPlayerColor playerColor))
-			(append (first listOfPieces) (checkCapture board playerColor (rest listOfPieces))))
+			(append (list (first listOfPieces)) (checkCapture board playerColor (rest listOfPieces))))
 			(t
 			(checkCapture board playerColor (rest listOfPieces)))))
 
@@ -1000,11 +1021,15 @@
 			(blockWest (playDefenseWest board opponentCoordinates playerColor))
 			(shouldRetreat (checkRetreat board listofPieces playerColor))
 			(retreat (cond ((eq shouldRetreat t) (playRetreat board playerColor listOfPieces)) (t ())))
+			(shouldCapture (checkCapture board playerColor listOfPieces))
+			(capture (cond ((not (eq shouldCapture nil)) (playCapture board playerColor shouldCapture)) (t ())))
 			(attack (playAttack board playerColor listOfPieces)))
 		
 		(print (checkCapture board playerColor listOfPieces))
 
-		(cond 	((not (eq blockEast nil))
+		(cond 	((AND (not (eq shouldCapture nil)) (not (eq capture nil)))
+				(playRound players (updateBoard board (first capture) (first (rest capture)) (list playerColor)) 'human scores))
+				((not (eq blockEast nil))
 				(playRound players (updateBoard board (first blockEast) (first (rest blockEast)) (list playerColor)) 'human scores))
 				((not (eq blockWest nil))
 				(playRound players (updateBoard board (first blockWest) (first (rest blockWest)) (list playerColor)) 'human scores))
