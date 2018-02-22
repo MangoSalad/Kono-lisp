@@ -393,11 +393,15 @@
 	(cond 	( (= (length row) 0)
 			())
 			( (string= (first row) "B")
-			(append (list 'b) (convertBoardRow (rest row))))
+			(append (list "B") (convertBoardRow (rest row))))
+			( (string= (first row) "BB")
+			(append (list "b") (convertBoardRow (rest row))))
 			( (string= (first row) "W")
-			(append (list 'w) (convertBoardRow (rest row))))
+			(append (list "W") (convertBoardRow (rest row))))
+			( (string= (first row) "WW")
+			(append (list "w") (convertBoardRow (rest row))))
 			( (string= (first row) "O")
-			(append (list '+) (convertBoardRow (rest row))))))
+			(append (list "+") (convertBoardRow (rest row))))))
 
 ;; Convert file board to game board.
 (defun fileBoardToGameBoard (board)
@@ -477,10 +481,19 @@
 
 ;; gets opposite player color given player
 (defun getOppositePlayerColor (playerColor)
-	(cond 	(	(string= player "W") 
-				'B)
-			(	(string= player "B")
-				'W)))
+	(cond 	(	(string= playerColor 'w) 
+				'b)
+			(	(string= playerColor 'b)
+				'w)))
+
+;; returns superpiece string given player color
+(defun getSuperPieceForPlayerColor (playerColor)
+	(cond 	(	(string= playerColor "W") 
+				"w")
+			(	(string= playerColor "B")
+				"b")))
+
+
 ;; get next player
 (defun getNextPlayer (players currentTurn)
 	(cond 	(	(string= currentTurn (first (rest (rest players))) )
@@ -876,7 +889,7 @@
 	;; if board has been went thru, return empty list
 	(cond ((eq (first board) nil)
 			())
-		  ((string= (first board) playerColor)
+		  ((OR (string= (first board) playerColor) (string= (first board) (getSuperPieceForPlayerColor playerColor)))
 			(append (list (list (ceiling index boardlength) (cond ((= (rem index boardlength) 0) boardlength) (t (rem index boardlength)))))
 			(getFriendlyPieces (rest board) boardlength playerColor (+ index 1))))
 		  (t
@@ -932,6 +945,16 @@
 (defun playCapture())
 	;;
 
+;; Loops through list of available pieces and returns list of super pieces
+(defun checkCapture(board playerColor listOfPieces)
+	(cond 	((eq (first listOfPieces) nil)
+			())
+			((string= (validPieceToMove board (first listOfPieces)) (getSuperPieceForPlayerColor playerColor))
+			(append (first listOfPieces) (checkCapture board playerColor (rest listOfPieces))))
+			(t
+			(checkCapture board playerColor (rest listOfPieces)))))
+
+;; moves random piece in retreat
 (defun playRetreat(board playerColor listOfPieces)
 	(let* ( (coordinates (makeAttackDecision board (getOppositePlayerColor playerColor) (getRandomPiece listOfPieces (randomPiece listOfPieces)))))
 		 (cond ((eq coordinates nil)
@@ -964,18 +987,35 @@
 
 (defun playComputer (players board scores playerColor opponentColor)
 	;; get opponent's coordinates
-	(let* ( (opponentCoordinates 
+	(let* ( ;; Opponent Coordinates
+			(opponentCoordinates 
 				(cond ((string= opponentColor "W")
 						(getClosestOpponent (rev (flatten board)) (length board) opponentColor 1))
 					  ((string= opponentColor "B")
 					  	(getClosestOpponent (flatten board) (length board) opponentColor 1))))
-			(listOfPieces (getFriendlyPieces (flatten board) (length board) playerColor 1)))
-		(print opponentCoordinates)
-		(print (playDefenseEast board opponentCoordinates playerColor))
-		(print (playDefenseWest board opponentCoordinates playerColor))
-		(print listOfPieces)
-		(print (playAttack board playerColor listOfPieces))
-		(print (checkRetreat board listofPieces playerColor))
+			;; List of computer pieces.
+			(listOfPieces (getFriendlyPieces (flatten board) (length board) playerColor 1))
+			;; Coordinates should the computer need to Block West"
+			(blockEast (playDefenseEast board opponentCoordinates playerColor))
+			(blockWest (playDefenseWest board opponentCoordinates playerColor))
+			(shouldRetreat (checkRetreat board listofPieces playerColor))
+			(retreat (cond ((eq shouldRetreat t) (playRetreat board playerColor listOfPieces)) (t ())))
+			(attack (playAttack board playerColor listOfPieces)))
+		
+		(print (checkCapture board playerColor listOfPieces))
+
+		(cond 	((not (eq blockEast nil))
+				(playRound players (updateBoard board (first blockEast) (first (rest blockEast)) (list playerColor)) 'human scores))
+				((not (eq blockWest nil))
+				(playRound players (updateBoard board (first blockWest) (first (rest blockWest)) (list playerColor)) 'human scores))
+				((eq shouldRetreat t)
+				(playRound players (updateBoard board (first retreat) (first (rest retreat)) (list playerColor)) 'human scores))
+				(t
+				(playRound players (updateBoard board (first attack) (first (rest attack)) (list playerColor)) 'human scores)))
+				
+		
+		(print (not (eq blockEast nil)))
+
 		(print "computer strategy")))
 
 ;; /* ********************************************************************* 
