@@ -401,6 +401,7 @@
 			(t 
 				(append (list (convertBoardRow (first board))) (fileBoardToGameBoard  (rest board))))))
 
+(defun saveToFile(players board currentTurn scores))
 
 ;; Return list of players, board, current player
 (defun openFile(fileName)
@@ -819,10 +820,17 @@
 				nil)
 		)))))))
 
-;; Returns random piece from list of friendly available pieces.
-(defun randomPiece()
-	(+ 2 (random 11)))
-	
+;; Returns random piece coordinates
+(defun getRandomPiece(listOfPieces index)
+	(cond 	((= index 0)
+				(first listOfPieces))
+			(t 
+				(getRandomPiece (rest listOfPieces) (- index 1)))))
+
+;; Returns index for getting random piece from list
+(defun randomPiece(listOfPieces)
+	(random (length listOfPieces)))
+
 ;; Returns a list of friendly available pieces.
 (defun getFriendlyPieces(board boardlength playerColor index) 
 	;; if board has been went thru, return empty list
@@ -835,10 +843,34 @@
 		  	(getFriendlyPieces (rest board) boardlength playerColor (+ index 1)))))
 	;; append coordinates to list
 
-(defun playAttack(board playerColor)
-	(print "Playing Attack"))
+(defun playAttack(board playerColor listOfPieces)
+	(cond ((string= playerColor "B")
+		(let* (	
+				(friendlyPiece (getRandomPiece listOfPieces (randomPiece listOfPieces)))
+				;; Valid direction to move northeast.
+				(validNorthEast (validDirectionToMove board (list (- (first friendlyPiece) 1) (+ (first (rest friendlyPiece)) 1)) ))
+				;; Valid direction to move northwest.
+				(validNorthWest (validDirectionToMove board (list (- (first friendlyPiece) 1) (- (first (rest friendlyPiece)) 1)) ))
+				;; Northeast coordinates.
+				(coordinatesNorthEast (list (- (first friendlyPiece) 1) (+ (first (rest friendlyPiece)) 1)))
+				;; Northwest coordinates
+				(coordinatesNorthWest (list (- (first friendlyPiece) 1) (- (first (rest friendlyPiece)) 1))))
 
+		;; Check if the final coordinate is able to moved to, if not return nil.
+		(cond ((string/= validNorthEast "+")
+				(playAttack(board playerColor listOfPieces)))
+			  ((string/= validNorthWest "+")
+				(playAttack(board playerColor listOfPieces)))
+			(
+		;; Return original coordinate and final coordinate - else send nil.
+		(cond 	((string= validNorthEast "+")
+				(list friendlyPiece coordinatesNorthEast "northeast"))
+				((string= validNorthWest "+")
+				(list friendlyPiece coordinatesNorthWest "northeast")))))))))
+
+;; returns coordinate of piece played and coordinate moved to
 (defun playCapture())
+	;;
 
 
 (defun displayDefense (originalCoordinates finalCoordinates direction)
@@ -852,12 +884,14 @@
 				(cond ((string= opponentColor "W")
 						(getClosestOpponent (rev (flatten board)) (length board) opponentColor 1))
 					  ((string= opponentColor "B")
-					  	(getClosestOpponent (flatten board) (length board) opponentColor 1)))))
+					  	(getClosestOpponent (flatten board) (length board) opponentColor 1))))
+			(listOfPieces (getFriendlyPieces (flatten board) (length board) playerColor 1)))
 		(print opponentCoordinates)
 		(print (playDefenseEast board opponentCoordinates playerColor))
 		(print (playDefenseWest board opponentCoordinates playerColor))
-		(print (getFriendlyPieces (flatten board) (length board) playerColor 1))
-		(print (playAttack board playerColor))
+		(print listOfPieces)
+		(print (getRandomPiece listOfPieces (randomPiece listOfPieces)))
+		(print (playAttack board playerColor listOfPieces))
 		(print "computer strategy")))
 
 ;; /* ********************************************************************* 
@@ -890,7 +924,7 @@
 
 				;; Save Game choice
 		(cond 	((string= (first choice) 'save)
-							(print "Saving game"))
+							(saveToFile players board currentTurn scores))
 
 				;; Play game logic		
 				((string= (first choice) 'play)
