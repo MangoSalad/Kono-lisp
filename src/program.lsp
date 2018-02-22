@@ -319,6 +319,11 @@
 		(terpri)
 		(validFile (read-line)))
 
+(defun readSaveFileName()
+	(princ "Name of the save file: ")
+	(terpri)
+	(read-line))
+
 ;; Ask user for size of board.
 (defun readBoardSize ()
 		(princ "Enter size of board (5/7/9): ")
@@ -401,7 +406,27 @@
 			(t 
 				(append (list (convertBoardRow (first board))) (fileBoardToGameBoard  (rest board))))))
 
-(defun saveToFile(players board currentTurn scores))
+;; Saves game to file.
+(defun saveToFile(fileName players board currentTurn scores)
+	(with-open-file (stream fileName :direction :output :if-exists :supersede)
+		(format stream "( ~%")
+		(format stream "; Round: ~%")
+		;; add actual round #
+		(format stream "~S ~%" 3)
+		(format stream "; Computer Score: ~%")
+		(format stream "~S ~%" (first (rest scores)))
+		(format stream "; Computer Color: ~%")
+		(format stream "~S ~%" (getPlayerColor players 'computer))
+		(format stream "; Human Score: ~%")
+		(format stream "~S ~%" (first (rest (rest (rest scores)))))
+		(format stream "; Human Color: ~%")
+		(format stream "~S ~%" (getPlayerColor players 'human))
+		(format stream "; Board: ~%")
+		(format stream "~S ~%" board)
+		(format stream "; Next Player: ~%")
+		(format stream "~S ~%" currentTurn)
+		(format stream ")")))
+
 
 ;; Return list of players, board, current player
 (defun openFile(fileName)
@@ -443,11 +468,20 @@
 	;; 																			)
 	;; 		(close inFile)))
 
+;; gets palyer color given player
 (defun getPlayerColor (players currentTurn)
 	(cond 	(	(string= currentTurn (first (rest (rest players))) )
 				(first (rest (rest (rest players)))))
 			(	(string= currentTurn (first players))
 				(first (rest players)))))
+
+;; get next player
+(defun getNextPlayer (players currentTurn)
+	(cond 	(	(string= currentTurn (first (rest (rest players))) )
+				(first players))
+			(	(string= currentTurn (first players))
+				(first (rest (rest players))))))
+
 
 (defun getOpponentColor (players currentTurn)
 	(cond 	(	(string= currentTurn (first (rest (rest players))) )
@@ -924,7 +958,7 @@
 
 				;; Save Game choice
 		(cond 	((string= (first choice) 'save)
-							(saveToFile players board currentTurn scores))
+					(saveToFile (readSaveFileName) players board currentTurn scores))
 
 				;; Play game logic		
 				((string= (first choice) 'play)
