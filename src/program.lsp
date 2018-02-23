@@ -687,41 +687,107 @@
 ;; Source Code for serialization 
 ;; ********************************************* */
 
-;; check if file exists
+;; /* ********************************************************************* 
+;; Function Name: validFile 
+;; Purpose: Checks if file with fileName exists.
+;; Parameters: 
+;;             fileName, name of the file to open for serialization..
+;; Return Value: FileName if file exists, or nil if file does not exist.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Use probe-file to check for file.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun validFile (fileName)
 	(probe-file fileName))
 
-;; Converts color identifies (black/white) in file to ones used in game (b/w).
+;; /* ********************************************************************* 
+;; Function Name: fileColorToGameColor 
+;; Purpose: Given a color from the file, convert it to B or W.
+;; Parameters: 
+;;             color, player color described in the file.
+;; Return Value: Atom representing player color - either B or W.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If color is "BLACK", then return B.
+;;             2) If color is "WHITE", then return W.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun fileColorToGameColor (color)
-	(cond 	((string= color "BLACK")
+	(cond (	(string= color "BLACK")
 			'b)
-			((string= color "WHITE")
+		  ( (string= color "WHITE")
 			'w)))
 
-;; Convert each board row into board.
-;; to do add superpieces
+;; /* ********************************************************************* 
+;; Function Name: convertBoardRow 
+;; Purpose: For each coordinate in the board, convert board from file into game.
+;; Parameters: 
+;;             row, one row from the board.
+;; Return Value: List containing game pieces for the row.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If length of row is zero, return empty list.
+;;             2) If piece at first of row is "B", return a list with "B" and call the function recursively to continue looping through the row.
+;;			   3) Continue to check for pieces and looping through row until the row is empty.
+;;			   4) A list containing all of the appropriate game pieces will be appended and returned.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun convertBoardRow (row)
-	(cond 	( (= (length row) 0)
+	(cond ( (= (length row) 0)
 			())
-			( (string= (first row) "B")
+		  ( (string= (first row) "B")
 			(append (list "B") (convertBoardRow (rest row))))
-			( (string= (first row) "BB")
+		  ( (string= (first row) "BB")
 			(append (list "b") (convertBoardRow (rest row))))
-			( (string= (first row) "W")
+		  ( (string= (first row) "W")
 			(append (list "W") (convertBoardRow (rest row))))
-			( (string= (first row) "WW")
+		  ( (string= (first row) "WW")
 			(append (list "w") (convertBoardRow (rest row))))
-			( (string= (first row) "O")
+		  ( (string= (first row) "O")
 			(append (list "+") (convertBoardRow (rest row))))))
 
-;; Convert file board to game board.
+;; /* ********************************************************************* 
+;; Function Name: fileBoardToGameBoard 
+;; Purpose: For each row in the file board, convert the row into the appropriate row in game. Return the list of rows as board to be used in game.
+;; Parameters: 
+;;             board, board uploaded from game file.
+;; Return Value: List of lists of game pieces representing the board.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Recursively loop through the board.
+;;             2) If there is no more board left, return empty list.
+;;			   3) Call convertBoardRow to load the row and append it to the recursive fileBoardToGameBoard call.
+;;			   4) Returns the board.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun fileBoardToGameBoard (board)
-	(cond 	( (= (length board) 0)
-				())
-			(t 
-				(append (list (convertBoardRow (first board))) (fileBoardToGameBoard  (rest board))))))
+	(cond ( (= (length board) 0)
+			())
+		  (t 
+			(append (list (convertBoardRow (first board))) (fileBoardToGameBoard  (rest board))))))
 
-;; Saves game to file.
+;; /* ********************************************************************* 
+;; Function Name: saveToFile 
+;; Purpose: Saves state of game to file.
+;; Parameters: 
+;;             fileName, name of file to save to.
+;;			   players, list holding each player and its player color
+;;			   board, list holding game board
+;; 			   currentTurn, atom holding next player.
+;;  		   scores, list holding each player's scores.
+;; Return Value: None.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Use with-open-file to output to file given file name.
+;;             2) Write to file using format stream.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun saveToFile(fileName players board currentTurn scores)
 	(with-open-file (stream fileName :direction :output :if-exists :supersede)
 		(format stream "( ~%")
@@ -742,15 +808,39 @@
 		(format stream "~S ~%" currentTurn)
 		(format stream ")")))
 
-
-;; Return list of players, board, current player
+;; /* ********************************************************************* 
+;; Function Name: openFile 
+;; Purpose: If file name is invalid, quit game.
+;; Parameters: 
+;;             fileName, name of file to save to.
+;; Return Value: List of players, board, next player, and scores.
+;; Local Variables: 
+;;             file, file stream object.
+;;			   roundNum, round number.
+;;			   computerScore, computer score.
+;;			   computerColor, computer color.
+;;			   humanScore, human score.
+;;			   humanColor, human color.
+;;			   board, the game board.
+;;			   nextPlayer, the next player.
+;; Algorithm: 
+;;             1) Checks if fileName is nil, if so, then quit game.
+;;			   2) Open file using with-open-file.
+;;			   3) Save file stream as local variable.
+;;			   4) Read each variable from file stream into local variables.
+;;			   5) Return list of players, board, next player, and scores.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun openFile(fileName)
-	;; Invalid file.
+
+	;; If file is invalid, then quit the game. 
 	(cond ( (eq fileName nil)
 			(princ "Could not open file.")
 			(Quit)))
 
+	;; Open file.
 	(with-open-file (stream fileName :direction :input :if-does-not-exist nil)
+		;; Save file object as file.
 		(let* ( (file (read stream nil))
 				(roundNum (first file))
 				(computerScore (first (rest file)))
@@ -758,81 +848,163 @@
 				(humanScore (first (rest (rest (rest file)))))
 				(humanColor (first (rest (rest (rest (rest file))))))
 				(board (first (rest (rest (rest (rest (rest file)))))))
-				(nextPlayer (first (rest (rest (rest (rest (rest (rest file))))))))
-				)
+				(nextPlayer (first (rest (rest (rest (rest (rest (rest file)))))))))
 
-				(format t "Round Number: ~D ~%" roundNum)
-				(format t "Computer Score: ~D ~%" computerScore)
-				(format t "Computer Color: ~D ~%" (fileColorToGameColor computerColor))
-				(format t "Human Score: ~D ~%" humanScore)
-				(format t "Human Color: ~D ~%" (fileColorToGameColor humanColor))
-				(format t "Board: ~S ~%" (fileBoardToGameBoard board))
-				(format t "Next Player: ~D ~%" nextPlayer)
+			;; Debugging output.
+			;; (format t "Round Number: ~D ~%" roundNum)
+			;; (format t "Computer Score: ~D ~%" computerScore)
+			;; (format t "Computer Color: ~D ~%" (fileColorToGameColor computerColor))
+			;; (format t "Human Score: ~D ~%" humanScore)
+			;; (format t "Human Color: ~D ~%" (fileColorToGameColor humanColor))
+			;; (format t "Board: ~S ~%" (fileBoardToGameBoard board))
+			;; (format t "Next Player: ~D ~%" nextPlayer)
 
-				;; Make players list. Append Board to it. Append next player.
-				(append
+			;; Make players list. Append Board to it. Append next player. Append scores.
+			(append
 				(append 
-				(append 
-				(list (list 'computer (fileColorToGameColor computerColor) 'human (fileColorToGameColor humanColor))) 
-				(list (fileBoardToGameBoard board)))
-				(list nextPlayer))
-				(list 'computer computerScore 'human humanScore))
-		)))
-	;; (let* (	( inFile (open "game.txt" :direction :input :if-does-not-exist nil))
-	;; 		(print (read-line inFile ))
-	;; 																			)
-	;; 		(close inFile)))
+					(append 
+						;; Convert color of pieces in file to appropriate names used in game. ("WHITE" becomes "W")
+						(list (list 'computer (fileColorToGameColor computerColor) 'human (fileColorToGameColor humanColor))) 
+							;; Convert file board into game board.
+							(list (fileBoardToGameBoard board)))
+								(list nextPlayer))
+									(list 'computer computerScore 'human humanScore)))))
 
-;; gets palyer color given player
+;; /* ********************************************************************* 
+;; Function Name: getPlayerColor 
+;; Purpose: Returns the color of the player.
+;; Parameters: 
+;;			   players, list holding each player and its player color
+;; 			   currentTurn, atom holding player to get color of.
+;; Return Value: Atom that is either W or B for player color.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If the player is the third in the players list, return the fourth item in the players list.
+;;             2) If the player is the first in the players list, return the second item in the players list.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun getPlayerColor (players currentTurn)
-	(cond 	(	(string= currentTurn (first (rest (rest players))) )
-				(first (rest (rest (rest players)))))
-			(	(string= currentTurn (first players))
-				(first (rest players)))))
+	(cond (	(string= currentTurn (first (rest (rest players))) )
+			(first (rest (rest (rest players)))))
+		  (	(string= currentTurn (first players))
+			(first (rest players)))))
 
-;; gets opposite player color given player
+;; /* ********************************************************************* 
+;; Function Name: getOppositePlayerColor 
+;; Purpose: Returns the color of the opposite player.
+;; Parameters: 
+;;			   playerColor, color of the player that you want the opposite of.
+;; Return Value: Atom that is either W or B for player color.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If player color is white, return black.
+;;             2) If player color is black, return white.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun getOppositePlayerColor (playerColor)
-	(cond 	(	(string= playerColor 'w) 
-				'b)
-			(	(string= playerColor 'b)
-				'w)))
+	(cond (	(string= playerColor 'w) 
+			'b)
+		  (	(string= playerColor 'b)
+			'w)))
 
-;; returns superpiece string given player color
+;; /* ********************************************************************* 
+;; Function Name: getSuperPieceForPlayerColor 
+;; Purpose: Returns the super piece of a given player color. Returns lower-case letter of player color.
+;; Parameters: 
+;;			   playerColor, color of the player.
+;; Return Value: String holding either "w" or "b" as super piece.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If player color is white, return lower-case white string.
+;;             2) If player color is black, return lower-case black string.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun getSuperPieceForPlayerColor (playerColor)
-	(cond 	(	(string= playerColor "W") 
-				"w")
-			(	(string= playerColor "B")
-				"b")))
+	(cond (	(string= playerColor "W") 
+			"w")
+		  (	(string= playerColor "B")
+			"b")))
 
+;; /* ********************************************************************* 
+;; Function Name: getNextPlayer 
+;; Purpose: Return the next player that will be playing.
+;; Parameters: 
+;;			   currentTurn, holds who is current player.
+;; Return Value: Name of the player that is next.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If current player is human, return computer.
+;;             2) If current player is computer, return human.
+;; Assistance Received: none 
+;; ********************************************************************* */
+(defun getNextPlayer (currentTurn)
+	(cond (	(string= currentTurn 'human )
+			'computer)
+		  (	(string= currentTurn 'computer)
+			'human)))
 
-;; get next player
-(defun getNextPlayer (players currentTurn)
-	(cond 	(	(string= currentTurn (first (rest (rest players))) )
-				(first players))
-			(	(string= currentTurn (first players))
-				(first (rest (rest players))))))
-
-
+;; /* ********************************************************************* 
+;; Function Name: getOpponentColor 
+;; Purpose: Return the color of the opponent.
+;; Parameters: 
+;;			   players, list holding each player and its color.
+;;			   currentTurn, holds who is current player.
+;; Return Value: The color of the opponent player.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If the current player is second in the players list, return the color of the first player.
+;;             2) If the current player is first in the players list, return the color of the second player.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun getOpponentColor (players currentTurn)
-	(cond 	(	(string= currentTurn (first (rest (rest players))) )
-				(first (rest players)))
-			(	(string= currentTurn (first players))
-				(first (rest (rest (rest players)))))))
+	(cond (	(string= currentTurn (first (rest (rest players))) )
+			(first (rest players)))
+		  (	(string= currentTurn (first players))
+			(first (rest (rest (rest players)))))))
 
-;; Help from internet
-;; https://stackoverflow.com/questions/2680864/how-to-remove-nested-parentheses-in-lisp#4066110
+;; /* ********************************************************************* 
+;; Function Name: flatten 
+;; Purpose: Remove nested lists in the provided list and concatenate the lists. 
+;; Parameters: 
+;;			   list, the list to unnest.
+;; Return Value: The color of the opponent player.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) ...
+;; Assistance Received: Recieved help from stackoverflow.
+;; 		 https://stackoverflow.com/questions/2680864/how-to-remove-nested-parentheses-in-lisp#4066110
+;; ********************************************************************* */
 (defun flatten (l)
-  (cond ((null l) nil)
-		((atom (car l)) (cons (car l) (flatten (cdr l))))
-		(t (append (flatten (car l)) (flatten (cdr l))))))
+  	(cond (	(null l) 
+	  		nil)
+		  (	(atom (car l)) (cons (car l) (flatten (cdr l))))
+		  (t 
+		  	(append (flatten (car l)) (flatten (cdr l))))))
 
-;; Get the # of remaining black pieces on the board.
+;; /* ********************************************************************* 
+;; Function Name: getCountofBlack 
+;; Purpose: Get the number of remaining black pieces left on the board.
+;; Parameters: 
+;;			   list, the list to unnest.
+;; Return Value: The color of the opponent player.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) ...
+;; Assistance Received: None.
+;; ********************************************************************* */
 (defun getCountofBlack (board count)
-	(cond   ((eq (first board) nil)
+	(cond (	(eq (first board) nil)
 			count)
-			((string= (first board) "B")
+		  (	(string= (first board) "B")
 			(getCountOfBlack (rest board) (+ count 1)))
-			(t 
+		  (t 
 			(getCountOfBlack (rest board) count))))
 
 ;; Get the # of remaining white pieces on the board.
