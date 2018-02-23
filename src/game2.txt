@@ -17,7 +17,7 @@
    ; Board:
    ( ( W  WW  W  W  W )
      ( O  O  O  O  W )
-     ( O  W  O  O  O )
+     ( O  O  O  O  O )
      ( O  O  BB  O  O )
      ( BB  B  B  B  B ) )
 

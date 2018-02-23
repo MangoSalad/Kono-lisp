@@ -232,7 +232,7 @@
 
 (defun updateBoard (board oldCoordinates NewCoordinates piece)
 	;; update new coordinate
-	(updateCoordinates (updateCoordinates board (first NewCoordinates) (first (rest NewCoordinates)) piece) (first oldCoordinates) (first (rest oldCoordinates)) (list '+))
+	(updateCoordinates (updateCoordinates board (first NewCoordinates) (first (rest NewCoordinates)) piece) (first oldCoordinates) (first (rest oldCoordinates)) (list "+"))
 	;; remove old coordinate
 	)
 
@@ -954,16 +954,16 @@
 		  ;; Check to move NorthWest
 	(cond 
 		  ((string=  northWest (getOppositePlayerColor playerColor))
-		  (list (first listOfPieces) northWest "northwest"))
+		  (list (first listOfPieces) (list (- (first (first listOfPieces)) 1) (- (first (rest (first listOfPieces))) 1)) "northwest"))
 		  ;; Check to move NorthEast
 		  ((string=  northEast (getOppositePlayerColor playerColor))
-		  (list (first listOfPieces) northEast "northeast"))
+		  (list (first listOfPieces) (list (- (first (first listOfPieces)) 1) (+ (first (rest (first listOfPieces))) 1)) "northeast"))
 		  ;; Check to move SouthWest
 		  ((string=  southWest (getOppositePlayerColor playerColor))
-		  (list (first listOfPieces) southWest "southwest"))
+		  (list (first listOfPieces) (list (+ (first (first listOfPieces)) 1) (- (first (rest (first listOfPieces))) 1)) "southwest"))
 		  ;; Check to move SouthEast
 		  ((string=  southEast (getOppositePlayerColor playerColor))
-		  (list (first listOfPieces) southEast "southeast")))))
+		  (list (first listOfPieces) (list (+ (first (first listOfPieces)) 1) (+ (first (rest (first listOfPieces))) 1)) "southeast")))))
 		  
 
 ;; Loops through list of available pieces and returns list of super pieces
@@ -1024,22 +1024,18 @@
 			(shouldCapture (checkCapture board playerColor listOfPieces))
 			(capture (cond ((not (eq shouldCapture nil)) (playCapture board playerColor shouldCapture)) (t ())))
 			(attack (playAttack board playerColor listOfPieces)))
-		
-		(print (checkCapture board playerColor listOfPieces))
 
-		(cond 	((AND (not (eq shouldCapture nil)) (not (eq capture nil)))
-				(playRound players (updateBoard board (first capture) (first (rest capture)) (list playerColor)) 'human scores))
+		(cond 	
+				((AND (not (eq shouldCapture nil)) (not (eq capture nil)))
+				(playRound players (updateBoard board (first capture) (first (rest capture)) (list (validPieceToMove board (first capture)))) 'human scores))
 				((not (eq blockEast nil))
-				(playRound players (updateBoard board (first blockEast) (first (rest blockEast)) (list playerColor)) 'human scores))
+				(playRound players (updateBoard board (first blockEast) (first (rest blockEast)) (list (validPieceToMove board (first blockEast)))) 'human scores))
 				((not (eq blockWest nil))
-				(playRound players (updateBoard board (first blockWest) (first (rest blockWest)) (list playerColor)) 'human scores))
+				(playRound players (updateBoard board (first blockWest) (first (rest blockWest)) (list (validPieceToMove board (first blockWest)))) 'human scores))
 				((eq shouldRetreat t)
-				(playRound players (updateBoard board (first retreat) (first (rest retreat)) (list playerColor)) 'human scores))
+				(playRound players (updateBoard board (first retreat) (first (rest retreat)) (list (validPieceToMove board (first retreat)))) 'human scores))
 				(t
-				(playRound players (updateBoard board (first attack) (first (rest attack)) (list playerColor)) 'human scores)))
-				
-		
-		(print (not (eq blockEast nil)))
+				(playRound players (updateBoard board (first attack) (first (rest attack)) (list (validPieceToMove board (first attack)))) 'human scores)))
 
 		(print "computer strategy")))
 
