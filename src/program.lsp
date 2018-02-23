@@ -991,40 +991,73 @@
 ;; Function Name: getCountofBlack 
 ;; Purpose: Get the number of remaining black pieces left on the board.
 ;; Parameters: 
-;;			   list, the list to unnest.
-;; Return Value: The color of the opponent player.
+;;			   board, unnested board list.
+;;			   count, the number of black pieces.
+;; Return Value: The count of the number of black pieces left on the board.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Recursively call getCountofBlack until there is no more board left.
+;;			   2) Check if the first of the board is black, if it is, increment count and call getCountOfBlack with the rest of board.
+;;			   3) Else, Call getCountOfBlack with the rest of board.
+;;			   4) TODO: recursively call function without count parameter.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun getCountofBlack (board count)
+	(cond (	(eq (first board) nil)
+			count)
+		  (	(OR (string= (first board) "B") (string= (first board) "b"))
+			(getCountOfBlack (rest board) (+ count 1)))
+		  (t 
+			(getCountOfBlack (rest board) count))))
+
+;; /* ********************************************************************* 
+;; Function Name: getCountofWhite 
+;; Purpose: Get the number of remaining white pieces left on the board.
+;; Parameters: 
+;;			   board, unnested board list.
+;;			   count, the number of white pieces.
+;; Return Value: The count of the number of white pieces left on the board.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Recursively call getCountofWhite until there is no more board left.
+;;			   2) Check if the first of the board is white, if it is, increment count and call getCountofWhite with the rest of board.
+;;			   3) Else, Call getCountofWhite with the rest of board.
+;;			   4) TODO: recursively call function without count parameter.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun getCountofWhite (board count)
+	(cond (	(eq (first board) nil)
+			count)
+		  (	(OR (string= (first board) "W") (string= (first board) "w"))
+			(getCountofWhite (rest board) (+ count 1)))
+		  (t 
+			(getCountofWhite (rest board) count))))
+
+;; /* ********************************************************************* 
+;; Function Name: getWhiteSide 
+;; Purpose: Gets the number of remaining black pieces that have yet to capture the white side.
+;; Parameters: 
+;;			   board, unnested board list.
+;;			   boardlength, the length of the board.
+;;			   numBlack, the number of black pieces that have not captured the white side.
+;;			   index, index number used for looping through unnested board.
+;; Return Value: The count of black peices that have not captured the white side.
 ;; Local Variables: 
 ;;             None.
 ;; Algorithm: 
 ;;             1) ...
 ;; Assistance Received: None.
 ;; ********************************************************************* */
-(defun getCountofBlack (board count)
-	(cond (	(eq (first board) nil)
-			count)
-		  (	(string= (first board) "B")
-			(getCountOfBlack (rest board) (+ count 1)))
-		  (t 
-			(getCountOfBlack (rest board) count))))
-
-;; Get the # of remaining white pieces on the board.
-(defun getCountofWhite (board count)
-	(cond   ((eq (first board) nil)
-			count)
-			((string= (first board) "W")
-			(getCountofWhite (rest board) (+ count 1)))
-			(t 
-			(getCountofWhite (rest board) count))))
-
-;; Returns number of remaining black pieces that have yet to capture the white side.
 (defun getWhiteSide (board boardlength numBlack index)
-	(cond 	((eq (first board) nil)
+	(cond (	(eq (first board) nil)
 			numBlack)
-			((AND (<= index (+ boardlength 1)) (string= (first board) "B"))
+		  (	(AND (<= index (+ boardlength 1)) (OR (string= (first board) "B") (string= (first board) "b")))
 			(getWhiteSide (rest board) boardlength (- numBlack 1) (+ index 1)))
-			((AND (= index (* boardlength 2)) (string= (first board) "B"))
+		  (	(AND (= index (* boardlength 2)) (OR (string= (first board) "B") (string= (first board) "b")))
 			(getWhiteSide (rest board) boardlength (- numBlack 1) (+ index 1)))
-			(t 
+		  (t 
 			(getWhiteSide (rest board) boardlength numBlack (+ index 1)))))
 
 ;; Returns number of remaining white pieces that have yet to capture the black side.
