@@ -45,15 +45,15 @@
 ;; Assistance Received: none 
 ;; ********************************************************************* */
 (defun choosefirstPlayer()
-	(let* ((humanDice (randomDice))
-			(computerDice (randomDice)))
+	(let* (	(humanDice (randomDice))
+			(computerDice (randomDice))	)
 			(format t "Human rolls ~D. ~%" humanDice)
 			(format t "Computer rolls ~D. ~%" computerDice)
-			(cond 	((> humanDice ComputerDice)
-					(list 'human))
-					((< humanDice ComputerDice)
-					(list 'computer))
-					((= humanDice ComputerDice)
+			(cond (	(> humanDice ComputerDice)
+					(list 'human)	)
+				  (	(< humanDice ComputerDice)
+					(list 'computer)	)
+				  (	(= humanDice ComputerDice)
 					(choosefirstPlayer)))))
 
 ;; /* ********************************************************************* 
@@ -72,10 +72,10 @@
 ;; ********************************************************************* */
 (defun computerColor ()
 	(let* ( (randomColor (random 1)) )
-			(cond 	((= randomColor 1)
-						(append (append (list 'w) (list 'human)) (list 'b)))
-					((= randomColor 0)
-						(append (append (list 'b) (list 'human)) (list 'w))))))
+			(cond (	(= randomColor 1)
+					(append (append (list 'w) (list 'human)) (list 'b))	)
+				  (	(= randomColor 0)
+					(append (append (list 'b) (list 'human)) (list 'w))))))
 
 ;; /* ********************************************************************* 
 ;; Function Name: chooseColor 
@@ -91,9 +91,9 @@
 ;; Assistance Received: none 
 ;; ********************************************************************* */
 (defun chooseColor(firstPlayer)
-	(cond 	((string= (first firstPlayer) 'human)
-			(append firstPlayer (readHumanColor)))
-			((string= (first firstPlayer) 'computer)
+	(cond (	(string= (first firstPlayer) 'human)
+			(append firstPlayer (readHumanColor))	)
+		  (	(string= (first firstPlayer) 'computer)
 			(append firstPlayer (computerColor )))))
 
 ;; /* *********************************************
@@ -115,32 +115,28 @@
 ;; Assistance Received: none 
 ;; ********************************************************************* */
 (defun makeRowForBoard (column row boardSize)
-	(cond ((= column 0)
-				()             )
-				;; First row is white.
-				((= row 1)
-					(append (list "W")
-					(makeRowForBoard (- column 1) row boardSize) )
-				)
-				;; Place white pieces on second row.
-				((and (= row 2) (OR (= column 1) (= column boardSize)))
-					(append (list "W")
-					(makeRowForBoard (- column 1) row boardSize) )
-				)
-				;; Place black pieces on last row
-				((= row boardSize)
-					(append (list "B")
-					(makeRowForBoard (- column 1) row boardSize) )        
-				)
-				;; Place black pieces on second to last row
-				((and (= row (- boardSize 1)) (OR (= column 1) (= column boardSize)))
-					(append (list "B")
-					(makeRowForBoard (- column 1) row boardSize) )
-				)
-				;; Place regular + pieces
-				(t 
-				(append (list "+")
-				(makeRowForBoard (- column 1) row boardSize) )  )))
+	(cond (	(= column 0)
+			()	)
+			;; First row is white.
+		  (	(= row 1)
+				(append (list "W")
+				(makeRowForBoard (- column 1) row boardSize))	)
+			;; Place white pieces on second row.
+		  (	(and (= row 2) (OR (= column 1) (= column boardSize)))
+				(append (list "W")
+				(makeRowForBoard (- column 1) row boardSize))	)
+			;; Place black pieces on last row
+		  (	(= row boardSize)
+				(append (list "B")
+				(makeRowForBoard (- column 1) row boardSize))	)
+			;; Place black pieces on second to last row
+		  (	(and (= row (- boardSize 1)) (OR (= column 1) (= column boardSize)))
+				(append (list "B")
+				(makeRowForBoard (- column 1) row boardSize))	)
+			;; Place regular + pieces
+		  (t 
+			(append (list "+")
+			(makeRowForBoard (- column 1) row boardSize)))))
 
 ;; /* ********************************************************************* 
 ;; Function Name: makeBoard 
@@ -156,35 +152,81 @@
 ;; Assistance Received: none 
 ;; ********************************************************************* */
 (defun makeBoard (boardSize constSize)
-	(cond ((= boardSize 0)
-				()             )
-				(t 
-				(append
-				(makeBoard (- boardSize 1) constSize)
-				(list (makeRowForBoard constSize boardSize constSize))))))
+	(cond (	(= boardSize 0)
+			()	)
+		  (t 
+			(append (makeBoard (- boardSize 1) constSize)
+			(list (makeRowForBoard constSize boardSize constSize))))))
 
-;; Displays board to user.
-(defun displayBoard (board boardlength)
-	(cond 		((= (length board) 0)
-					(format t "~D ~%" 'S)  
-					(format t "~D  " 'W)
-					)
-				((= boardlength 0)
-					(format t "~D ~%" 'N)
-					(displayBoard board (+ boardlength 1)))
-				(t 
-					 (format t "~D ~A ~%" boardlength (first board))
-					 (displayBoard (rest board) (+ boardlength 1))
-					 (format t "~D " (length board))
-				)))
+;; /* ********************************************************************* 
+;; Function Name: displayBoard 
+;; Purpose: Prints board with coordinate grid to standard output.
+;; Parameters: 
+;;             board, board object.
+;;			   boardlength, initialized at 0.
+;;			   constantLength, constant length of the board.
+;; Return Value: Board to standard output.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) ...
+;; Assistance Received: none 
+;; ********************************************************************* */
+(defun displayBoard (board boardlength constantLength)
+	(cond 
+			;; If there is no more board left, print compasses South and West.
+		  (	(= (length board) 0)
+			(format t "~A ~%" "S")  
+			(format t "~A  " "W"))
+			;; If the the board is starting to print (boardlength = 0), then print North compass.
+		  (	(= boardlength 0)
+			(format t "~D ~%" 'N)
+			;; Call displayBoard.
+			(displayBoard board (+ boardlength 1) constantLength)	)
+			;; Print the row for the board, row #.
+		  (t 
+			(format t "~D ~A ~%" boardlength (first board))
+			(displayBoard (rest board) (+ boardlength 1) constantLength)
+			;; Print column #.
+			(format t "~D " (length board))
+			;; If there are no more columns left, print East compass.
+			(cond (	(= (length board) constantLength)
+					(format t "~D ~%" 'E))))))
 
-;; Returns row based on row number.
+;; /* ********************************************************************* 
+;; Function Name: filterRows 
+;; Purpose: Returns a list containing a row from the board given the row number.
+;; Parameters: 
+;;             board, board object.
+;;			   boardlength, initialized at 0.
+;;			   constantLength, constant length of the board.
+;; Return Value: Board to standard output.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) ...
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun filterRows (board boardlength row)
 	(cond (	(= (length board) (- boardlength row) )
-			(first board))
-		  (t (filterRows (rest board) boardlength row))))
+			(first board)	)
+		  (t 
+		  	(filterRows (rest board) boardlength row))))
 
-;; Returns column based on colum number.
+;; /* ********************************************************************* 
+;; Function Name: filterColumns 
+;; Purpose: Returns a list containing a column from the board given the column number.
+;; Parameters: 
+;;             board, board object.
+;;			   boardlength, initialized at 0.
+;;			   constantLength, constant length of the board.
+;; Return Value: Board to standard output.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) ...
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun filterColumns (row boardlength column)
 	(cond (	(= (length row) (- boardlength column) )
 			(first row))
@@ -232,9 +274,20 @@
 
 (defun updateBoard (board oldCoordinates NewCoordinates piece)
 	;; update new coordinate
-	(updateCoordinates (updateCoordinates board (first NewCoordinates) (first (rest NewCoordinates)) piece) (first oldCoordinates) (first (rest oldCoordinates)) (list "+"))
+	(print piece)
+	(updateCoordinates (updateCoordinates board (first NewCoordinates) (first (rest NewCoordinates)) (checkSuperPiece (length board) piece newCoordinates)) (first oldCoordinates) (first (rest oldCoordinates)) (list "+"))
 	;; remove old coordinate
 	)
+
+;; checks if the piece is eligible to become a super piece.
+(defun checkSuperPiece(boardlength piece coordinate)
+	(print (first piece))
+	(cond ((AND (string= (first piece) "W") (= (first coordinate) boardlength))
+			(list (getSuperPieceForPlayerColor (first piece))))
+		  ((AND (string= (first piece) "B") (= (first coordinate) 1))
+			(list (getSuperPieceForPlayerColor (first piece))))
+		  (t 
+		  	piece)))
 
 	
 
@@ -244,49 +297,117 @@
 ;; Source Code to ask the human player for input
 ;; ********************************************* */
 
-;; Validates choice if yes, then true. Else no.
-(defun validYesNo (choice)
+;; /* ********************************************************************* 
+;; Function Name: validYesNoPlayFile 
+;; Purpose: Checks if parameter choice is either Y or N. If not, call original function again.
+;; Used to read human input for loading an existing game.
+;; Parameters: 
+;;             choice, string for human input.
+;; Return Value: choice.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If choice is "Y", return choice.
+;;			   2) If choice is "N", return choice.
+;;			   3) Else call readPlayFromFile() again to read user input.
+;; Assistance Received: none 
+;; ********************************************************************* */
+(defun validYesNoPlayFile (choice)
 	(cond ( (string= choice "Y")
-					(print choice)  )
-				( (string= choice "N")
-					(print choice)  )
-				( t 
-					(readPlayFromFile) )) )
+			choice	)  
+		  ( (string= choice "N")
+			choice	) 
+		  (t 
+			(readPlayFromFile) )) )
 
+;; /* ********************************************************************* 
+;; Function Name: validYesNoPlayFile 
+;; Purpose: Checks if parameter choice is either Y or N. If not, call original function again. 
+;; Used for reading human input for playing game again.
+;; Parameters: 
+;;             choice, string for human input.
+;; Return Value: choice.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If choice is "Y", return choice.
+;;			   2) If choice is "N", return choice.
+;;			   3) Else call readPlayAgain() again to read user input.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun validPlayAgain (choice)
 	(cond ( (string= choice "Y")
-					(print choice)  )
-				( (string= choice "N")
-					(print choice)  )
-				( t 
-					(readPlayAgain) )) )
+			choice	)  
+		  ( (string= choice "N")
+			choice	) 
+		  (t 
+			(readPlayAgain))))
 
-;; Validates board size.
+;; /* ********************************************************************* 
+;; Function Name: validBoardSize 
+;; Purpose: Validates human input for board size. If size is correct, return the size. Else, call readBoardSize again.
+;; Parameters: 
+;;             choice, string for human input.
+;; Return Value: choice.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If choice matches a board size, return the board size.
+;;			   3) Else call readBoardSize() again to read user input.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun validBoardSize (choice)
-	(cond ( (= choice 5)
-					(print choice)  )
-				( (= choice 7)
-					(print choice)  )
-				( (= choice 9)
-					(print choice)  )
-				( t 
-					(readBoardSize) )) )
+	(cond ( (string= choice "5")
+			5	)
+		  ( (string= choice "7")
+			7	)
+		  ( (string= choice "9")
+			9	)
+		  ( t 
+			(readBoardSize))))
 
-;; Validates menu choice.
-(defun validMenu (choice)
-	(cond ( (= choice 1)
-					(list 'save)  )
-				( (= choice 2)
-					(list 'play)  )
-				( (= choice 3)
-					(list 'help)  )
-				( (= choice 4)
-					(list 'quit)  )
-				( t 
-					(readMenu) )) )
+;; /* ********************************************************************* 
+;; Function Name: validMenu 
+;; Purpose: Validates menu choice. If correct, will return the choice. Else, will call readMenu again.
+;; Parameters: 
+;;             choice, string for human input.
+;;			   currentTurn, string that is the current turn. Is included in recursive call to readMenu.
+;; Return Value: List containing choice.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If choice matches a menu choice, return the list of that choice. Ideally, should return atom. Made it return a list as it was coded when I just started LISP.
+;;			   2) If choice does not match, call readMenu again.
+;; Assistance Received: none 
+;; ********************************************************************* */
+(defun validMenu (choice currentTurn)
+	(cond ( (string= choice "1")
+			(list 'save)  )
+		  ( (string= choice "2")
+			(list 'play)  )
+		  ( (string= choice "3")
+			(list 'help)  )
+		  ( (string= choice "4")
+			(list 'quit)  )
+		  ( t 
+			(readMenu currentTurn) )) )
 
-;; Validates direction of piece.
-(defun validHumanDirection (choice row column)
+;; /* ********************************************************************* 
+;; Function Name: validHumanDirection 
+;; Purpose: Validates human input for direction to move piece.
+;; Parameters: 
+;;             choice, string for human input.
+;;			   row, row number of starting position.
+;;             column, column number of start position.
+;; Return Value: List containing coordinate (row,column) of the direction chosen.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If choice matches a direction, return a list containing the row and column coordinates of that coordinate.
+;;			   2) If choice does not match, call readHumanDirection again with coordinates.
+;; Assistance Received: none 
+;; ********************************************************************* */
+(defun validHumanDirection (row column choice)
 	(cond ( (string= choice "NW")
 			(append (list (- row 1)) (list (- column 1))))
 		  ( (string= choice "NE")
@@ -296,60 +417,161 @@
 		  ( (string= choice "SW")
 		  	(append (list (+ row 1)) (list (- column 1))))
 		  (t 
-		  	(readHumanDirection))))
+		  	(readHumanDirection (append (list row) (list column))))))
 
-;; Validates color choice.
+;; /* ********************************************************************* 
+;; Function Name: validColor 
+;; Purpose: Validates choice for player color.
+;; Parameters: 
+;;             choice, string for human input.
+;; Return Value: List containing (human humanColor computer computerColor).
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If choice matches a color, return a list containing (human humanColor computer computerColor)
+;;			   2) If choice does not match, call readHumanColor again.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun validColor (choice)
 	(cond ( (string= choice "W")
-			(append (append (list 'w) (list 'computer) (list 'b))))
-		 ( (string= choice "B")
-		 	(append (append (list 'b) (list 'computer) (list 'w))))
+			;; Human will be white. Computer will be black.
+			(append (append (list 'w) (list 'computer) (list 'b)))	)
+		  ( (string= choice "B")
+		  	;; Human will be black. Computer will be white.
+		 	(append (append (list 'b) (list 'computer) (list 'w)))	)
 		  (t 
 		  	(readHumanColor))))
 
-;; Ask user to read if they would like to read game from file.
+;; /* ********************************************************************* 
+;; Function Name: readPlayFromFile 
+;; Purpose: Reads input from human to play a game from file.
+;; Parameters: 
+;;             None.
+;; Return Value: Output from validYesNoPlayFile. Which will containg Y or N.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Ask user for input.
+;;			   2) Call function to validate input.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun readPlayFromFile ()
-		(princ "Do you want to start a game from a file? (Y/N) ")
-		(terpri)
-		(validYesNo (read))  )
+	(princ "Do you want to start a game from a file? (Y/N) ")
+	(terpri)
+	(validYesNoPlayFile (read-line)))
 
-;; Ask user for filename of save game file.
+;; /* ********************************************************************* 
+;; Function Name: readFileName 
+;; Purpose: Reads input from human to play a game from file.
+;; Parameters: 
+;;             None.
+;; Return Value: Output from validFile. Which will contain filename or nil if file does not exist.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Ask user for input.
+;;			   2) Call function to validate input.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun readFileName()
-		(princ "Name of game file: ")
-		(terpri)
-		(validFile (read-line)))
+	(princ "Name of game file: ")
+	(terpri)
+	(validFile (read-line)))
 
+;; /* ********************************************************************* 
+;; Function Name: readSaveFileName 
+;; Purpose: Reads input from human to save game to file.
+;; Parameters: 
+;;             None.
+;; Return Value: String containing user input.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Ask user for input.
+;;			   2) Read input.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun readSaveFileName()
 	(princ "Name of the save file: ")
 	(terpri)
 	(read-line))
 
-;; Ask user for size of board.
+;; /* ********************************************************************* 
+;; Function Name: readBoardSize 
+;; Purpose: Reads input from human for board size.
+;; Parameters: 
+;;             None.
+;; Return Value: Output from validBoardSize which will contain the board size as an atom.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Ask user for input.
+;;			   2) Call function to validate input.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun readBoardSize ()
-		(princ "Enter size of board (5/7/9): ")
-		(terpri)
-		(validBoardSize (read))  )
+	(princ "Enter size of board (5/7/9): ")
+	(terpri)
+	(validBoardSize (read-line)))
 
-;; Ask user for menu choice.
-(defun readMenu ()
-		(terpri)
-		(princ "1. Save the game.")
-		(terpri)
-		(princ "2. Make a move.")
-		(terpri)
-		(princ "3. Ask for help.")
-		(terpri)
-		(princ "4. Quit the game.")
-		(terpri)
-		(validMenu (read)))
+;; /* ********************************************************************* 
+;; Function Name: readMenu 
+;; Purpose: Reads input from human for menu.
+;; Parameters: 
+;;             None.
+;; Return Value: Output from validMenu which will contain the user choice.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Ask user for input.
+;;			   2) Call function to validate input.
+;; Assistance Received: none 
+;; ********************************************************************* */
+(defun readMenu (currentTurn)
+	(terpri)
+	(princ "1. Save the game.")
+	(terpri)
+	(princ "2. Make a move.")
+	(terpri)
+	;; If current turn is human, allow human to ask for help.
+	(cond (	(string= currentTurn 'human)
+			(princ "3. Ask for help.")
+			(terpri)))
+	(princ "4. Quit the game.")
+	(terpri)
+	(validMenu (read-line) currentTurn))
 
-;; Ask user for color.
+;; /* ********************************************************************* 
+;; Function Name: readHumanColor 
+;; Purpose: Reads input from human for player color.
+;; Parameters: 
+;;             None.
+;; Return Value: Output from validColor which will contain the user choice.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Ask user for input.
+;;			   2) Call function to validate input.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun readHumanColor ()
-		(princ  "What color will you play? (w/b)")
+		(princ  "What color will you play? (W/B)")
 		(terpri)
-		(validColor (read)))
+		(validColor (read-line)))
 
-;; Ask user for row of piece to move.
+;; /* ********************************************************************* 
+;; Function Name: readHumanRow 
+;; Purpose: Reads input from human for row to move.
+;; Parameters: 
+;;             None.
+;; Return Value: Output from validColor which will contain the user choice.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Ask user for input.
+;;			   2) Call function to validate input.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun readHumanRow ()
 	(princ "Enter row of piece to move: ")
 	(terpri)
@@ -365,7 +587,7 @@
 (defun readHumanDirection (coordinates)
 	(princ "Enter direction to move (NW/NE/SE/SW): ")
 	(terpri)
-	(validHumanDirection (read) (first coordinates) (first (rest coordinates))))
+	(validHumanDirection (first coordinates) (first (rest coordinates)) (read-line)))
 
 (defun readPlayAgain ()
 	(princ "Do you want to play again? (Y/N): ")
@@ -512,8 +734,8 @@
 ;; https://stackoverflow.com/questions/2680864/how-to-remove-nested-parentheses-in-lisp#4066110
 (defun flatten (l)
   (cond ((null l) nil)
-        ((atom (car l)) (cons (car l) (flatten (cdr l))))
-        (t (append (flatten (car l)) (flatten (cdr l))))))
+		((atom (car l)) (cons (car l) (flatten (cdr l))))
+		(t (append (flatten (car l)) (flatten (cdr l))))))
 
 ;; Get the # of remaining black pieces on the board.
 (defun getCountofBlack (board count)
@@ -738,9 +960,9 @@
 ;; got help on internet
 ;; https://stackoverflow.com/questions/34422711/reversing-list-in-lisp#34437069
 (defun rev (l)
-           (cond
-             ((null l) '())
-             (T (append (rev (cdr l)) (list (car l))))))
+		   (cond
+			 ((null l) '())
+			 (T (append (rev (cdr l)) (list (car l))))))
 
 ;; return list with closest opponent coordinates
 (defun getClosestOpponent (board boardlength opponentColor index)	
@@ -779,11 +1001,11 @@
 			(
 		;; Return original coordinate and final coordinate - else send nil.
 		(cond 	((string= blockFromSouthEast "B")
-				(list (list (+ (first opponentCoordinates) 2) (+ (first (rest opponentCoordinates)) 2)) finalCoordinates))
+				(list (list (+ (first opponentCoordinates) 2) (+ (first (rest opponentCoordinates)) 2)) finalCoordinates "northwest"))
 				((string= blockfromSouth "B")
-				(list (list (+ (first opponentCoordinates) 2) (first (rest opponentCoordinates))) finalCoordinates))
+				(list (list (+ (first opponentCoordinates) 2) (first (rest opponentCoordinates))) finalCoordinates "northeast"))
 				((string= blockFromEast "B")
-				(list (list (first opponentCoordinates) (+ (first (rest opponentCoordinates)) 2)) finalCoordinates))
+				(list (list (first opponentCoordinates) (+ (first (rest opponentCoordinates)) 2)) finalCoordinates "southeast"))
 				(t 
 				nil)
 		)))))
@@ -1002,9 +1224,36 @@
 
 
 (defun displayDefense (originalCoordinates finalCoordinates direction)
-	(format t "The computer moved the piece at (~S,~S) ~A. ~%" )
-	(format t "It wanted to block the human piece at (~S,~S). ~%")
-)
+	(format t "The computer moved the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
+	(format t "It wanted to block the human piece at (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
+
+(defun displayAttack (originalCoordinates finalCoordinates direction)
+	(format t "The computer moved the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
+	(format t "It wanted to advance the piece to (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
+
+(defun displayCapture (originalCoordinates finalCoordinates direction)
+	(format t "The computer moved the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
+	(format t "It wanted to capture the human piece at (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
+
+(defun displayRetreat (originalCoordinates finalCoordinates direction)
+	(format t "The computer moved the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
+	(format t "It wanted to retreat the piece to (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
+
+(defun displayHelpDefense (originalCoordinates finalCoordinates direction)
+	(format t "It is suggested to move the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
+	(format t "This will block the computer piece at (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
+
+(defun displayHelpAttack (originalCoordinates finalCoordinates direction)
+	(format t "It is suggested to move the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
+	(format t "This will advance the piece to (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
+
+(defun displayHelpCapture (originalCoordinates finalCoordinates direction)
+	(format t "It is suggested to move the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
+	(format t "This will capture the computer piece at (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
+
+(defun displayHelpRetreat (originalCoordinates finalCoordinates direction)
+	(format t "It is suggested to move the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
+	(format t "This will retreat the piece to (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
 
 (defun playComputer (players board scores playerColor opponentColor)
 	;; get opponent's coordinates
@@ -1027,17 +1276,61 @@
 
 		(cond 	
 				((AND (not (eq shouldCapture nil)) (not (eq capture nil)))
+				(displayCapture (first capture) (first (rest capture)) (first (rest (rest capture))))
 				(playRound players (updateBoard board (first capture) (first (rest capture)) (list (validPieceToMove board (first capture)))) 'human scores))
+				
 				((not (eq blockEast nil))
+				(displayDefense (first blockEast) (first (rest blockEast)) (first (rest (rest blockEast))))
 				(playRound players (updateBoard board (first blockEast) (first (rest blockEast)) (list (validPieceToMove board (first blockEast)))) 'human scores))
+				
 				((not (eq blockWest nil))
+				(displayDefense (first blockWest) (first (rest blockWest)) (first (rest (rest blockWest))))
 				(playRound players (updateBoard board (first blockWest) (first (rest blockWest)) (list (validPieceToMove board (first blockWest)))) 'human scores))
+				
 				((eq shouldRetreat t)
+				(displayRetreat (first retreat) (first (rest retreat)) (first (rest (rest retreat))))
 				(playRound players (updateBoard board (first retreat) (first (rest retreat)) (list (validPieceToMove board (first retreat)))) 'human scores))
+				
 				(t
-				(playRound players (updateBoard board (first attack) (first (rest attack)) (list (validPieceToMove board (first attack)))) 'human scores)))
+				(displayAttack (first attack) (first (rest attack)) (first (rest (rest attack))))
+				(playRound players (updateBoard board (first attack) (first (rest attack)) (list (validPieceToMove board (first attack)))) 'human scores)))))
 
-		(print "computer strategy")))
+(defun playHelp (players board scores playerColor opponentColor currentTurn)
+	(let* ( ;; Opponent Coordinates
+			(opponentCoordinates 
+				(cond ((string= opponentColor "W")
+						(getClosestOpponent (rev (flatten board)) (length board) opponentColor 1))
+					  ((string= opponentColor "B")
+					  	(getClosestOpponent (flatten board) (length board) opponentColor 1))))
+			;; List of computer pieces.
+			(listOfPieces (getFriendlyPieces (flatten board) (length board) playerColor 1))
+			;; Coordinates should the computer need to Block West"
+			(blockEast (playDefenseEast board opponentCoordinates playerColor))
+			(blockWest (playDefenseWest board opponentCoordinates playerColor))
+			(shouldRetreat (checkRetreat board listofPieces playerColor))
+			(retreat (cond ((eq shouldRetreat t) (playRetreat board playerColor listOfPieces)) (t ())))
+			(shouldCapture (checkCapture board playerColor listOfPieces))
+			(capture (cond ((not (eq shouldCapture nil)) (playCapture board playerColor shouldCapture)) (t ())))
+			(attack (playAttack board playerColor listOfPieces)))
+
+		(cond 	
+				((AND (not (eq shouldCapture nil)) (not (eq capture nil)))
+				(displayHelpCapture (first capture) (first (rest capture)) (first (rest (rest capture)))))
+				
+				((not (eq blockEast nil))
+				(displayHelpDefense (first blockEast) (first (rest blockEast)) (first (rest (rest blockEast)))))
+				
+				((not (eq blockWest nil))
+				(displayHelpDefense (first blockWest) (first (rest blockWest)) (first (rest (rest blockWest)))))
+				
+				((eq shouldRetreat t)
+				(displayHelpRetreat (first retreat) (first (rest retreat)) (first (rest (rest retreat)))))
+				
+				(t
+				(displayHelpAttack (first attack) (first (rest attack)) (first (rest (rest attack)))))))
+		
+	(playRound players board 'human scores))
+
 
 ;; /* ********************************************************************* 
 ;; Function Name: playRound 
@@ -1055,7 +1348,7 @@
 		(format t "It is ~A's turn. ~%" currentTurn)
 
 		;; Display Board.
-		(displayBoard board 0)
+		(displayBoard board 0 (length board))
 		
 		;; Check if there is a winner.
 		(cond 	((eq (checkwinner board) t)
@@ -1063,7 +1356,7 @@
 						(tournamentControl roundScores scores))))
 		
 		;; Display Menu.
-		(let*( 	(choice (readMenu))
+		(let*( 	(choice (readMenu currentTurn))
 				(playerColor (getPlayerColor players currentTurn))
 				(opponentColor (getOpponentColor players currentTurn)))
 
@@ -1080,7 +1373,7 @@
 												
 				;; Help mode.
 				((string= (first choice) 'help)
-					(print "Asking for help"))
+					(playHelp players board scores playerColor opponentColor currentTurn))
 
 				;; Quit game.
 				((string= (first choice) 'quit)
