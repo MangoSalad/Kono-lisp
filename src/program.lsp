@@ -543,7 +543,7 @@
 
 ;; /* ********************************************************************* 
 ;; Function Name: readHumanColor 
-;; Purpose: Reads input from human for player color.
+;; Purpose: Reads input from human for player color..
 ;; Parameters: 
 ;;             None.
 ;; Return Value: Output from validColor which will contain the user choice.
@@ -560,11 +560,37 @@
 		(validColor (read-line)))
 
 ;; /* ********************************************************************* 
+;; Function Name: validHumanRow 
+;; Purpose: Validates input for human row.
+;; Parameters: 
+;;             coordinate, contains the row coordinate.
+;; Return Value: List containing row coordinate.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Convert string to integer. 
+;;			   2) If integer is number, then return integer. 
+;;			   3) Else, call readHumanRow again.
+;; Assistance Received: none 
+;; ********************************************************************* */
+(defun validHumanRow (coordinate)
+	;; Boolean for if the coordinate is a number.
+	(let* ( (isNumber (numberp (ignore-errors (parse-integer coordinate)))))
+	
+	;; Check if coordinate is a number.
+	(cond ( (eq isNumber nil)
+			(princ "Invalid row number.")
+			(terpri)
+			(readHumanRow))
+		  (t
+			(list (parse-integer coordinate))))))
+
+;; /* ********************************************************************* 
 ;; Function Name: readHumanRow 
 ;; Purpose: Reads input from human for row to move.
 ;; Parameters: 
 ;;             None.
-;; Return Value: Output from validColor which will contain the user choice.
+;; Return Value: Output from validHumanRow which will contain the row number.
 ;; Local Variables: 
 ;;             None.
 ;; Algorithm: 
@@ -575,24 +601,87 @@
 (defun readHumanRow ()
 	(princ "Enter row of piece to move: ")
 	(terpri)
-	(list (read)))
+	(validHumanRow (read-line)))
 
-;; Ask user for column of piece to move.
+;; /* ********************************************************************* 
+;; Function Name: validHumanColumn 
+;; Purpose: Validates input for human column.
+;; Parameters: 
+;;             coordinate, contains the column coordinate.
+;; Return Value: List containing column coordinate.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Convert string to integer. 
+;;			   2) If integer is number, then return integer. 
+;;			   3) Else, call readHumanRow again.
+;; Assistance Received: none 
+;; ********************************************************************* */
+(defun validHumanColumn (coordinate)
+	;; Boolean for if the coordinate is a number.
+	(let* ( (isNumber (numberp (ignore-errors (parse-integer coordinate)))))
+	
+	;; Check if coordinate is a number.
+	(cond ( (eq isNumber nil)
+			(princ "Invalid column number.")
+			(terpri)
+			(readHumanColumn))
+		  (t
+			(list (parse-integer coordinate))))))
+
+;; /* ********************************************************************* 
+;; Function Name: readHumanColumn 
+;; Purpose: Reads input from human for column to move.
+;; Parameters: 
+;;             None.
+;; Return Value: Output from validHumanColumn which will contain the column number.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Ask user for input.
+;;			   2) Call function to validate input.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun readHumanColumn ()
 	(princ "Enter column of piece to move: ")
 	(terpri)
-	(list (read)))
+	(validHumanColumn (read-line)))
 
-;; Ask user direction to move piece
+;; /* ********************************************************************* 
+;; Function Name: readHumanDirection 
+;; Purpose: Reads input from human for which direction to move piece.
+;; Parameters: 
+;;             None.
+;; Return Value: Output from validHumanDirection which will contain the coordinates of the direction that the piece will move to.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Ask user for input.
+;;			   2) Call function to validate input.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun readHumanDirection (coordinates)
 	(princ "Enter direction to move (NW/NE/SE/SW): ")
 	(terpri)
 	(validHumanDirection (first coordinates) (first (rest coordinates)) (read-line)))
 
+;; /* ********************************************************************* 
+;; Function Name: readPlayAgain 
+;; Purpose: Reads input from human for if to play game again. 
+;; Parameters: 
+;;             None.
+;; Return Value: Output from validPlayAgain which will contain the user choice.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Ask user for input.
+;;			   2) Call function to validate input.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun readPlayAgain ()
 	(princ "Do you want to play again? (Y/N): ")
 	(terpri)
-	(validPlayAgain (read)))
+	(validPlayAgain (read-line)))
 
 ;; /* *********************************************
 ;; Source Code for serialization 
