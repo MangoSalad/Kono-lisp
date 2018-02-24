@@ -771,6 +771,32 @@
 		  (t 
 			(append (list (convertBoardRow (first board))) (fileBoardToGameBoard  (rest board))))))
 
+(defun convertBoardRowToFile (row)
+	(cond ( (= (length row) 0)
+			())
+		  ( (string= (first row) "B")
+			(append (list "B") (convertBoardRowToFile (rest row))))
+		  ( (string= (first row) "b")
+			(append (list "BB") (convertBoardRowToFile (rest row))))
+		  ( (string= (first row) "W")
+			(append (list "W") (convertBoardRowToFile (rest row))))
+		  ( (string= (first row) "w")
+			(append (list "BB") (convertBoardRowToFile (rest row))))
+		  ( (string= (first row) "+")
+			(append (list "O") (convertBoardRowToFile (rest row))))))
+
+(defun gameBoardToFileBoard (board)
+	(cond ( (= (length board) 0)
+			())
+		  (t 
+			(append (list (convertBoardRowToFile (first board))) (gameBoardToFileBoard  (rest board))))))
+
+(defun gameColorToFileColor (color)
+	(cond (	(string= color 'b)
+			"BLACK")
+		  ( (string= color 'w)
+			"WHITE")))
+
 ;; /* ********************************************************************* 
 ;; Function Name: saveToFile 
 ;; Purpose: Saves state of game to file.
@@ -797,13 +823,13 @@
 		(format stream "; Computer Score: ~%")
 		(format stream "~S ~%" (first (rest scores)))
 		(format stream "; Computer Color: ~%")
-		(format stream "~S ~%" (getPlayerColor players 'computer))
+		(format stream "~A ~%" (gameColorToFileColor (getPlayerColor players 'computer)))
 		(format stream "; Human Score: ~%")
 		(format stream "~S ~%" (first (rest (rest (rest scores)))))
 		(format stream "; Human Color: ~%")
-		(format stream "~S ~%" (getPlayerColor players 'human))
+		(format stream "~A ~%" (gameColorToFileColor (getPlayerColor players 'human)))
 		(format stream "; Board: ~%")
-		(format stream "~S ~%" board)
+		(format stream "~A ~%" (gameBoardToFileBoard board))
 		(format stream "; Next Player: ~%")
 		(format stream "~S ~%" currentTurn)
 		(format stream ")")))
@@ -1043,7 +1069,7 @@
 ;;			   boardlength, the length of the board.
 ;;			   numBlack, the number of black pieces that have not captured the white side.
 ;;			   index, index number used for looping through unnested board.
-;; Return Value: The count of black peices that have not captured the white side.
+;; Return Value: The count of black pieces that have not captured the white side.
 ;; Local Variables: 
 ;;             None.
 ;; Algorithm: 
@@ -1060,175 +1086,350 @@
 		  (t 
 			(getWhiteSide (rest board) boardlength numBlack (+ index 1)))))
 
-;; Returns number of remaining white pieces that have yet to capture the black side.
+;; /* ********************************************************************* 
+;; Function Name: getBlackSide 
+;; Purpose: Gets the number of remaining white pieces that have yet to capture the black side.
+;; Parameters: 
+;;			   board, unnested board list.
+;;			   boardlength, the length of the board.
+;;			   numWhite, the number of white pieces that have not captured the white side.
+;;			   index, index number used for looping through unnested board.
+;; Return Value: The count of white pieces that have not captured the black side.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) ...
+;; Assistance Received: None.
+;; ********************************************************************* */
 (defun getBlackSide (board boardlength numWhite index)
-	(cond 	((eq (first board) nil)
+	(cond (	(eq (first board) nil)
 			numWhite)
-			((AND (>= index (* boardlength (- boardlength 1))) (string= (first board) "W"))
+		  (	(AND (>= index (* boardlength (- boardlength 1))) (OR (string= (first board) "W") (string= (first board) "w")))
 			(getBlackSide (rest board) boardlength (- numWhite 1) (+ index 1)))
-			((AND (= index (* boardlength (- boardlength 2))) (string= (first board) "W"))
+		  (	(AND (= index (* boardlength (- boardlength 2))) (OR (string= (first board) "W") (string= (first board) "w")))
 			(getBlackSide (rest board) boardlength (- numWhite 1) (+ index 1)))
-			((AND (= index (+ (* boardlength (- boardlength 2)) 1)) (string= (first board) "W"))
+		  (	(AND (= index (+ (* boardlength (- boardlength 2)) 1)) (OR (string= (first board) "W") (string= (first board) "w")))
 			(getBlackSide (rest board) boardlength (- numWhite 1) (+ index 1)))
-			(t 
+		  (t 
 			(getBlackSide (rest board) boardlength numWhite (+ index 1)))))
 
-;; checks if there is a winner 
+;; /* ********************************************************************* 
+;; Function Name: checkwinner 
+;; Purpose: Returns t if a winning condition has been met, else returns empty list.
+;; Parameters: 
+;;			   board, game board.
+;; Return Value: T or nil if game condition has been met.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Check if the white side has been captured by black pieces.
+;;			   2) Check if the black side has been captured by white pieces.
+;; Assistance Received: None.
+;; ********************************************************************* */
 (defun checkwinner(board)
-	(cond 	((= (getWhiteSide (flatten board) (length board) (getCountofBlack (flatten board) 0) 1) 0)
+	(cond (	(= (getWhiteSide (flatten board) (length board) (getCountofBlack (flatten board) 0) 1) 0)
 			t)
-			((= (getBlackSide (flatten board) (length board) (getCountofWhite (flatten board) 0) 1) 0)
+		  (	(= (getBlackSide (flatten board) (length board) (getCountofWhite (flatten board) 0) 1) 0)
 			t)
-			(t
-				())))
+		  (t
+			())))
 
+;; /* ********************************************************************* 
+;; Function Name: countBlackScore 
+;; Purpose: Counts the score for the black player.
+;; Parameters: 
+;;			   board, unnested game board.
+;;			   boardlength, length of the board.
+;;			   score, current score
+;;			   index, used to traverse board.
+;; Return Value: Score which is sum of the total points captured.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) ...
+;; Assistance Received: None.
+;; ********************************************************************* */
 (defun countBlackScore (board boardlength score index)
 	(cond 	((eq (first board) nil)
 			score)
-			((AND (= index 1) (string= (first board) "B"))
+			((AND (= index 1) (OR (string= (first board) "B") (string= (first board) "b")))
 				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
-			((AND (= index 2) (string= (first board) "B"))
+			((AND (= index 2) (OR (string= (first board) "B") (string= (first board) "b")))
 				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (= index 3) (string= (first board) "B"))
+			((AND (= index 3) (OR (string= (first board) "B") (string= (first board) "b")))
 				(countBlackScore (rest board) boardlength (+ score 5) (+ index 1)))
 			;; board size is 5
-			((AND (AND (= index 4) (string= (first board) "B")) (= boardlength 5))
+			((AND (AND (= index 4) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 5))
 				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (AND (= index 5) (string= (first board) "B")) (= boardlength 5))
+			((AND (AND (= index 5) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 5))
 				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
 			;; board size is 7
-			((AND (AND (= index 4) (string= (first board) "B")) (= boardlength 7))
+			((AND (AND (= index 4) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 7))
 				(countBlackScore (rest board) boardlength (+ score 7) (+ index 1)))
-			((AND (AND (= index 5) (string= (first board) "B")) (= boardlength 7))
+			((AND (AND (= index 5) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 7))
 				(countBlackScore (rest board) boardlength (+ score 5) (+ index 1)))
-			((AND (AND (= index 6) (string= (first board) "B")) (= boardlength 7))
+			((AND (AND (= index 6) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 7))
 				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (AND (= index 7) (string= (first board) "B")) (= boardlength 7))
+			((AND (AND (= index 7) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 7))
 				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
 			;; board size is 9
-			((AND (AND (= index 4) (string= (first board) "B")) (= boardlength 9))
+			((AND (AND (= index 4) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
 				(countBlackScore (rest board) boardlength (+ score 7) (+ index 1)))
-			((AND (AND (= index 5) (string= (first board) "B")) (= boardlength 9))
+			((AND (AND (= index 5) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
 				(countBlackScore (rest board) boardlength (+ score 9) (+ index 1)))
-			((AND (AND (= index 6) (string= (first board) "B")) (= boardlength 9))
+			((AND (AND (= index 6) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
 				(countBlackScore (rest board) boardlength (+ score 7) (+ index 1)))
-			((AND (AND (= index 7) (string= (first board) "B")) (= boardlength 9))
+			((AND (AND (= index 7) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
 				(countBlackScore (rest board) boardlength (+ score 5) (+ index 1)))
-			((AND (AND (= index 8) (string= (first board) "B")) (= boardlength 9))
+			((AND (AND (= index 8) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
 				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (AND (= index 9) (string= (first board) "B")) (= boardlength 9))
+			((AND (AND (= index 9) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
 				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
 			;; row 2
-			((AND (= index (+ boardlength 1)) (string= (first board) "B"))
+			((AND (= index (+ boardlength 1)) (OR (string= (first board) "B") (string= (first board) "b")))
 				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (= index (* boardlength 2)) (string= (first board) "B"))
+			((AND (= index (* boardlength 2)) (OR (string= (first board) "B") (string= (first board) "b")))
 				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
 			(t 
 			(countBlackScore (rest board) boardlength score (+ index 1)))))
 
+;; /* ********************************************************************* 
+;; Function Name: countWhiteScore 
+;; Purpose: Counts the score for the white player.
+;; Parameters: 
+;;			   board, unnested game board.
+;;			   boardlength, length of the board.
+;;			   score, current score
+;;			   index, used to traverse board.
+;; Return Value: Score which is sum of the total points captured.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) ...
+;; Assistance Received: None.
+;; ********************************************************************* */
 (defun countWhiteScore (board boardlength score index)
 	(cond 	((eq (first board) nil)
 			score)
-			((AND (= index (+ (* boardlength (- boardlength 1)) 1)) (string= (first board) "W"))
+			((AND (= index (+ (* boardlength (- boardlength 1)) 1)) (OR (string= (first board) "W") (string= (first board) "w")))
 				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
-			((AND (= index (+ (* boardlength (- boardlength 1)) 2)) (string= (first board) "W"))
+			((AND (= index (+ (* boardlength (- boardlength 1)) 2)) (OR (string= (first board) "W") (string= (first board) "w")))
 				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
 			((AND (= index (+ (* boardlength (- boardlength 1)) 3)) (string= (first board) "W"))
 				(countWhiteScore (rest board) boardlength (+ score 5) (+ index 1)))
 			;; board size is 5
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (string= (first board) "W")) (= boardlength 5))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 5))
 				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 5)) (string= (first board) "W")) (= boardlength 5))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 5)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 5))
 				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
 			;; board size is 7
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (string= (first board) "W")) (= boardlength 7))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 7))
 				(countWhiteScore (rest board) boardlength (+ score 7) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 5)) (string= (first board) "W")) (= boardlength 7))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 5)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 7))
 				(countWhiteScore (rest board) boardlength (+ score 5) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 6)) (string= (first board) "W")) (= boardlength 7))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 6)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 7))
 				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 7)) (string= (first board) "W")) (= boardlength 7))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 7)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 7))
 				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
 			;; board size is 9
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (string= (first board) "W")) (= boardlength 9))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
 				(countWhiteScore (rest board) boardlength (+ score 7) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 5)) (string= (first board) "W")) (= boardlength 9))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 5)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
 				(countWhiteScore (rest board) boardlength (+ score 9) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 6)) (string= (first board) "W")) (= boardlength 9))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 6)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
 				(countWhiteScore (rest board) boardlength (+ score 7) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 7)) (string= (first board) "W")) (= boardlength 9))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 7)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
 				(countWhiteScore (rest board) boardlength (+ score 5) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 8)) (string= (first board) "W")) (= boardlength 9))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 8)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
 				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 9)) (string= (first board) "W")) (= boardlength 9))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 9)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
 				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
 			;; row 2
-			((AND (= index (* boardlength (- boardlength 1))) (string= (first board) "W"))
+			((AND (= index (* boardlength (- boardlength 1))) (OR (string= (first board) "W") (string= (first board) "w")))
 				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (= index (+ (* boardlength (- boardlength 2)) 1)) (string= (first board) "W"))
+			((AND (= index (+ (* boardlength (- boardlength 2)) 1)) (OR (string= (first board) "W") (string= (first board) "w")))
 				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
 			(t 
 			(countWhiteScore (rest board) boardlength score (+ index 1)))))
 
-;; Calculates scores for computer and human
+;; /* ********************************************************************* 
+;; Function Name: calculateScores 
+;; Purpose: Calculates scores for computer and human players.
+;; Parameters: 
+;;			   board, game board.
+;;			   boardlength, length of the board.
+;; Return Value: Returns list containing score for white and black players.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Get scores for white player.
+;;			   2) Get scores for black player.
+;;			   3) Put scores into list and return the list.
+;; Assistance Received: None.
+;; ********************************************************************* */
 (defun calculateScores (board boardlength)
 	;; Return white score and black score in that order.
 	(list (+ (countWhiteScore board boardlength 0 1) (* (- (+ boardlength 2) (getCountOfBlack board 0)) 5))
 	(+ (countBlackScore board boardlength 0 1) (* (- (+ boardlength 2) (getCountofWhite board 0)) 5))))
 
-;; Announces Round scores for computer and human
+;; /* ********************************************************************* 
+;; Function Name: announceScores 
+;; Purpose: Outputs player score.
+;; Parameters: 
+;;			   player, player name - either computer or human.
+;;			   score, player's score.
+;; Return Value: None.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Output player and score.
+;; Assistance Received: None.
+;; ********************************************************************* */
 (defun announceScores (player score)
 	(format t "~A scored ~S points. ~%" player score))
 
-;; include tie conclusion
+;; /* ********************************************************************* 
+;; Function Name: calculateWinner 
+;; Purpose: Calculates the winner for the current game round.
+;; Parameters: 
+;;			   playerOne, first player.
+;;			   scoreOne, player one's score.
+;;			   playerTwo, second player.
+;;			   scoreTwo, player two's score.
+;; Return Value: List containing winner and difference of scores to be awarded.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Check if scoreOne is greater than scoreTwo. If so, then output that the playerOne is winner.
+;;             2) Check if scoreOne is less than scoreTwo. If so, then output that the playerTwo is winner.
+;;			   3) If it is a tie, output that it is a tie.
+;; Assistance Received: None.
+;; ********************************************************************* */
 (defun calculateWinner (playerOne scoreOne playerTwo scoreTwo)
-	(cond 	((> scoreOne scoreTwo)
-				(format t "~A won and is awarded ~S points ~%" playerOne (- scoreOne scoreTwo))
-				(list playerOne (- scoreOne scoreTwo)))
-			((< scoreOne scoreTwo)
-				(format t "~A won and is awarded ~S points ~%" playerTwo (- scoreTwo scoreOne))
-				(list playerTwo (- scoreTwo scoreOne)))
-			((= scoreOne scoreTwo)
-				(format t "There is no clear winner. It is a draw. ~%")
-				())))
+	(cond (	(> scoreOne scoreTwo)
+			(format t "~A won and is awarded ~S points ~%" playerOne (- scoreOne scoreTwo))
+			(list playerOne (- scoreOne scoreTwo)))
+		  (	(< scoreOne scoreTwo)
+			(format t "~A won and is awarded ~S points ~%" playerTwo (- scoreTwo scoreOne))
+			(list playerTwo (- scoreTwo scoreOne)))
+		  (	(= scoreOne scoreTwo)
+			(format t "There is no clear winner. It is a draw. ~%")
+			())))
 
-;; Gets the winner for the round
-;; Returns list - player who won, difference in points to be awareded
+;; /* ********************************************************************* 
+;; Function Name: calculateWinner 
+;; Purpose: Announces scores for the current round and calls function to calculate Winner.
+;; Parameters: 
+;;			   board, game board.
+;;			   players, players list holding players and player colors.
+;; Return Value: List containing winner and difference of scores to be awarded.
+;; Local Variables: 
+;;             scores, list that has total points for each player for the round.
+;; Algorithm: 
+;;             1) Announce first player's points.
+;;             2) Announce second player's points.
+;;			   3) Announce winner.
+;; Assistance Received: None.
+;; ********************************************************************* */
 (defun getWinner(board players)
+	;; scores for the game.
 	(let* ( (scores (calculateScores (flatten board) (length board))))
-			;; if first player is white, announce the white score
-			(cond 	((string= (first (rest players)) "W")
-						(announceScores (first players) (first scores))
-						(announceScores (first (rest (rest players))) (first (rest scores)))
-						(calculateWinner (first players) (first scores) (first (rest (rest players))) (first (rest scores))))
-					((string= (first (rest players)) "B")
-						(announceScores (first players) (first (rest scores)))
-						(announceScores (first (rest (rest players))) (first scores))
-						(calculateWinner (first players) (first (rest scores)) (first (rest (rest players))) (first scores))))))
+		;; if first player is white, announce the white score
+		(cond (	(string= (first (rest players)) "W")
+				(announceScores (first players) (first scores))
+				(announceScores (first (rest (rest players))) (first (rest scores)))
+				(calculateWinner (first players) (first scores) (first (rest (rest players))) (first (rest scores))))
+				;; if first player is black, announce the black score
+			  ( (string= (first (rest players)) "B")
+				(announceScores (first players) (first (rest scores)))
+				(announceScores (first (rest (rest players))) (first scores))
+				(calculateWinner (first players) (first (rest scores)) (first (rest (rest players))) (first scores))))))
 
-;; Announces tournament scores for computer and human
+;; /* ********************************************************************* 
+;; Function Name: announceTournamentScores 
+;; Purpose: Announces tournament scores.
+;; Parameters: 
+;;			   player, player to be announced.
+;;			   score, player's score.
+;; Return Value: None.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Announce player's tournament score.
+;; Assistance Received: None.
+;; ********************************************************************* */
 (defun announceTournamentScores (player score)
 	(format t "~A has ~S points. ~%" player score))
 
+;; /* ********************************************************************* 
+;; Function Name: tournamentControl 
+;; Purpose: Main tournament control logc. Calls functions to announce scores and asks user to play again.
+;; Parameters: 
+;;			   prevWinner, previous winner of the tournament.
+;;			   scores, scores list that has tournament score for each player.
+;; Return Value: None.
+;; Local Variables: 
+;;             tournamentScore, list hold tournament scores for each player.
+;;			   playAgain, choice for human to play round again.
+;; Algorithm: 
+;;             1) Announce player's tournament score.
+;;			   2) Ask human if they want to play again. Record answer to local variable.
+;;			   3) Previous winner plays first.
+;; Assistance Received: None.
+;; ********************************************************************* */
 (defun tournamentControl (prevWinner scores)
+	;; Get tournament scores.
 	(let* ( (tournamentScore (calculateTournamentScore prevWinner scores)))
-			(format t "Tournament Scores: ~%")
-			(announceTournamentScores (first tournamentScore) (first (rest tournamentScore)))
-			(announceTournamentScores (first (rest (rest tournamentScore))) (first (rest (rest (rest tournamentScore)))))
-			(let* ( (playAgain (readPlayAgain)))
-				(cond 	((string= playAgain "Y")
-						(newRound tournamentScore (first prevWinner)))
-						((string= playAgain "N")
-						(Quit))))
-))
+		;; Announce tournament scores.
+		(format t "Tournament Scores: ~%")
+		(announceTournamentScores (first tournamentScore) (first (rest tournamentScore)))
+		(announceTournamentScores (first (rest (rest tournamentScore))) (first (rest (rest (rest tournamentScore)))))
+		;; Ask user to play again.
+		(let* ( (playAgain (readPlayAgain)))
+			(cond (	(string= playAgain "Y")
+					;; Previous winner plays first.
+					(newRound tournamentScore (first prevWinner)))
+				  (	(string= playAgain "N")
+				  	;; Quit game.
+					(Quit))))))
 	
+;; /* ********************************************************************* 
+;; Function Name: calculateTournamentScore 
+;; Purpose: Calculate tournament score.
+;; Parameters: 
+;;			   roundScores, round scores.
+;;			   tournamentScores, tournament scores.
+;; Return Value: None.
+;; Local Variables: 
+;;			   None.
+;; Algorithm: 
+;;             1) ...
+;; Assistance Received: None.
+;; ********************************************************************* */	
 (defun calculateTournamentScore (roundScores tournamentScores)
-	(cond 	((string= (first roundScores) "COMPUTER")
+	(cond (	(string= (first roundScores) "COMPUTER")
 			(list 'computer (+ (first (rest tournamentScores)) (first (rest roundScores))) 'human (first (rest (rest (rest tournamentScores))))))
-			((string= (first roundScores) "HUMAN")
+		  (	(string= (first roundScores) "HUMAN")
 			(list 'computer (first (rest tournamentScores)) 'human (+ (first (rest (rest (rest tournamentScores)))) (first (rest roundScores)))))))
 
-;; human player strategy
+;; /* ********************************************************************* 
+;; Function Name: playHuman 
+;; Purpose: Logic for human player.
+;; Parameters: 
+;;			   players, list of players.
+;;			   board, game board.
+;;			   scores, current tournament scores.
+;;			   playerColor, human player color.
+;; Return Value: None.
+;; Local Variables: 
+;;			   coordinates, row and column positions of human player piece.
+;; Algorithm: 
+;;             1) Ask for player coordinates.
+;;			   2) Ask for direction to move.
+;;			   4) Validate coordinates and final coordinates.
+;;			   5) Update board if valid, else ask again.
+;; Assistance Received: None.
+;; ********************************************************************* */	
 (defun playHuman (players board scores playerColor)
 	(let*( (coordinates (append (readHumanRow) (readHumanColumn) ))
 		;; get final coordinates
@@ -1237,11 +1438,9 @@
 		(isValidPiece (validPieceToMove board coordinates))
 		;; checks if the piece at new coordinates is "+"
 		(isValidDirection (validDirectionToMove board finalCoordinates)))
-		(format t "start coordinates ~S" coordinates)
-		(format t "final coordinates ~S" finalCoordinates)
-		(cond 	((AND (string= isValidPiece playerColor) (string= isValidDirection "+") )   
+		(cond (	(AND (string= isValidPiece playerColor) (string= isValidDirection "+") )   
 				(playRound players (updateBoard board coordinates finalCoordinates (list playerColor)) 'computer scores))
-				(t
+			  (t
 				(princ "Not a valid move. Try again.") 
 				(playRound players board 'human scores)))))
 
@@ -1424,9 +1623,7 @@
 					(coordinatesNorthWest (list (- (first friendlyPiece) 1) (- (first (rest friendlyPiece)) 1))))
 
 			;; Check if the final coordinate is able to moved to, if not return nil.
-			(cond ((string/= validNorthEast "+")
-					nil)
-				((string/= validNorthWest "+")
+			(cond ((AND (string/= validNorthEast "+") (string/= validNorthWest "+"))
 					nil)
 				(
 			;; Return original coordinate and final coordinate - else send nil.
@@ -1446,9 +1643,7 @@
 					(coordinatesSouthWest (list (+ (first friendlyPiece) 1) (- (first (rest friendlyPiece)) 1))))
 
 			;; Check if the final coordinate is able to moved to, if not return nil.
-			(cond ((string/= validSouthEast "+")
-					nil)
-				((string/= validSouthWest "+")
+			(cond ((AND (string/= validSouthEast "+") (string/= validSouthWest "+"))
 					nil)
 				(
 			;; Return original coordinate and final coordinate - else send nil.
@@ -1516,39 +1711,170 @@
 			   (t 
 			   	coordinates))))
 
-
+;; /* ********************************************************************* 
+;; Function Name: displayDefense 
+;; Purpose: Announces computer decision to play defensively by blocking a human piece.
+;; Parameters: 
+;;			   originalCoordinates, original coordinates of the piece.
+;;			   finalCoordinates, final coordinates of the piece.
+;;			   direction, direction that the piece is moving to.
+;; Return Value: None.
+;; Local Variables: 
+;;			   None.
+;; Algorithm: 
+;;             1) Announce that the computer will the original piece at a certain direction.
+;;			   2) Announce the reason as well as the final coordinates.
+;; Assistance Received: None.
+;; ********************************************************************* */	
 (defun displayDefense (originalCoordinates finalCoordinates direction)
 	(format t "The computer moved the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
-	(format t "It wanted to block the human piece at (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
+	(format t "It wanted to block the human piece by moving the piece to (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
 
+;; /* ********************************************************************* 
+;; Function Name: displayAttack 
+;; Purpose: Announces computer decision to play offensively by advancing a piece.
+;; Parameters: 
+;;			   originalCoordinates, original coordinates of the piece.
+;;			   finalCoordinates, final coordinates of the piece.
+;;			   direction, direction that the piece is moving to.
+;; Return Value: None.
+;; Local Variables: 
+;;			   None.
+;; Algorithm: 
+;;             1) Announce that the computer will the original piece at a certain direction.
+;;			   2) Announce the reason as well as the final coordinates.
+;; Assistance Received: None.
+;; ********************************************************************* */	
 (defun displayAttack (originalCoordinates finalCoordinates direction)
 	(format t "The computer moved the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
 	(format t "It wanted to advance the piece to (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
 
+;; /* ********************************************************************* 
+;; Function Name: displayCapture 
+;; Purpose: Announces computer decision to capture a piece.
+;; Parameters: 
+;;			   originalCoordinates, original coordinates of the piece.
+;;			   finalCoordinates, final coordinates of the piece.
+;;			   direction, direction that the piece is moving to.
+;; Return Value: None.
+;; Local Variables: 
+;;			   None.
+;; Algorithm: 
+;;             1) Announce that the computer will the original piece at a certain direction.
+;;			   2) Announce the reason as well as the final coordinates.
+;; Assistance Received: None.
+;; ********************************************************************* */	
 (defun displayCapture (originalCoordinates finalCoordinates direction)
 	(format t "The computer moved the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
 	(format t "It wanted to capture the human piece at (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
 
+;; /* ********************************************************************* 
+;; Function Name: displayRetreat 
+;; Purpose: Announces computer decision to retreat a piece.
+;; Parameters: 
+;;			   originalCoordinates, original coordinates of the piece.
+;;			   finalCoordinates, final coordinates of the piece.
+;;			   direction, direction that the piece is moving to.
+;; Return Value: None.
+;; Local Variables: 
+;;			   None.
+;; Algorithm: 
+;;             1) Announce that the computer will the original piece at a certain direction.
+;;			   2) Announce the reason as well as the final coordinates.
+;; Assistance Received: None.
+;; ********************************************************************* */	
 (defun displayRetreat (originalCoordinates finalCoordinates direction)
 	(format t "The computer moved the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
 	(format t "It wanted to retreat the piece to (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
 
+;; /* ********************************************************************* 
+;; Function Name: displayHelpDefense 
+;; Purpose: Announces the recommendation to human that they should play defensively by blocking a computer piece
+;; Parameters: 
+;;			   originalCoordinates, original coordinates of the piece.
+;;			   finalCoordinates, final coordinates of the piece.
+;;			   direction, direction that the piece is moving to.
+;; Return Value: None.
+;; Local Variables: 
+;;			   None.
+;; Algorithm: 
+;;             1) Announce that the computer will the original piece at a certain direction.
+;;			   2) Announce the reason as well as the final coordinates.
+;; Assistance Received: None.
+;; ********************************************************************* */	
 (defun displayHelpDefense (originalCoordinates finalCoordinates direction)
 	(format t "It is suggested to move the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
-	(format t "This will block the computer piece at (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
+	(format t "This will block the computer piece by moving your piece to (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
 
+;; /* ********************************************************************* 
+;; Function Name: displayHelpAttack 
+;; Purpose: Announces the recommendation to human that they should play offensively by advancing their piece.
+;; Parameters: 
+;;			   originalCoordinates, original coordinates of the piece.
+;;			   finalCoordinates, final coordinates of the piece.
+;;			   direction, direction that the piece is moving to.
+;; Return Value: None.
+;; Local Variables: 
+;;			   None.
+;; Algorithm: 
+;;             1) Announce that the computer will the original piece at a certain direction.
+;;			   2) Announce the reason as well as the final coordinates.
+;; Assistance Received: None.
+;; ********************************************************************* */	
 (defun displayHelpAttack (originalCoordinates finalCoordinates direction)
 	(format t "It is suggested to move the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
 	(format t "This will advance the piece to (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
 
+;; /* ********************************************************************* 
+;; Function Name: displayHelpCapture 
+;; Purpose: Announces the recommendation to human that they should capture a computer piece.
+;; Parameters: 
+;;			   originalCoordinates, original coordinates of the piece.
+;;			   finalCoordinates, final coordinates of the piece.
+;;			   direction, direction that the piece is moving to.
+;; Return Value: None.
+;; Local Variables: 
+;;			   None.
+;; Algorithm: 
+;;             1) Announce that the computer will the original piece at a certain direction.
+;;			   2) Announce the reason as well as the final coordinates.
+;; Assistance Received: None.
+;; ********************************************************************* */	
 (defun displayHelpCapture (originalCoordinates finalCoordinates direction)
 	(format t "It is suggested to move the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
 	(format t "This will capture the computer piece at (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
 
+;; /* ********************************************************************* 
+;; Function Name: displayHelpRetreat 
+;; Purpose: Announces the recommendation to human that they should retreat.
+;; Parameters: 
+;;			   originalCoordinates, original coordinates of the piece.
+;;			   finalCoordinates, final coordinates of the piece.
+;;			   direction, direction that the piece is moving to.
+;; Return Value: None.
+;; Local Variables: 
+;;			   None.
+;; Algorithm: 
+;;             1) Announce that the computer will the original piece at a certain direction.
+;;			   2) Announce the reason as well as the final coordinates.
+;; Assistance Received: None.
+;; ********************************************************************* */	
 (defun displayHelpRetreat (originalCoordinates finalCoordinates direction)
 	(format t "It is suggested to move the piece at (~S,~S) ~A. ~%" (first originalCoordinates) (first (rest originalCoordinates)) direction)
 	(format t "This will retreat the piece to (~S,~S). ~%" (first finalCoordinates) (first (rest finalCoordinates))))
 
+;; /* ********************************************************************* 
+;; Function Name: playComputer 
+;; Purpose: ..
+;; Parameters: 
+;;             none.
+;; Return Value: none.
+;; Local Variables: 
+;;             none.
+;; Algorithm: 
+;;             1) ...
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun playComputer (players board scores playerColor opponentColor)
 	;; get opponent's coordinates
 	(let* ( ;; Opponent Coordinates
@@ -1656,7 +1982,8 @@
 
 				;; Save Game choice
 		(cond 	((string= (first choice) 'save)
-					(saveToFile (readSaveFileName) players board currentTurn scores))
+					(saveToFile (readSaveFileName) players board currentTurn scores)
+					(Quit))
 
 				;; Play game logic		
 				((string= (first choice) 'play)
