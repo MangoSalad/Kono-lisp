@@ -1438,8 +1438,8 @@
 		(isValidPiece (validPieceToMove board coordinates))
 		;; checks if the piece at new coordinates is "+"
 		(isValidDirection (validDirectionToMove board finalCoordinates)))
-		(cond (	(AND (string= isValidPiece playerColor) (string= isValidDirection "+") )   
-				(playRound players (updateBoard board coordinates finalCoordinates (list playerColor)) 'computer scores))
+		(cond (	(AND (OR (string= isValidPiece playerColor) (string= isValidPiece (getSuperPieceForPlayerColor playerColor))) (string= isValidDirection "+") )   
+				(playRound players (updateBoard board coordinates finalCoordinates (list isValidPiece)) 'computer scores))
 			  (t
 				(princ "Not a valid move. Try again.") 
 				(playRound players board 'human scores)))))
@@ -1654,7 +1654,6 @@
 
 ;; returns coordinate of piece played and coordinate moved to
 (defun playCapture(board playerColor listOfPieces)
-
 	(cond ((eq (first listOfPieces) nil)
 			nil))
 
@@ -1674,7 +1673,9 @@
 		  (list (first listOfPieces) (list (+ (first (first listOfPieces)) 1) (- (first (rest (first listOfPieces))) 1)) "southwest"))
 		  ;; Check to move SouthEast
 		  ((string=  southEast (getOppositePlayerColor playerColor))
-		  (list (first listOfPieces) (list (+ (first (first listOfPieces)) 1) (+ (first (rest (first listOfPieces))) 1)) "southeast")))))
+		  (list (first listOfPieces) (list (+ (first (first listOfPieces)) 1) (+ (first (rest (first listOfPieces))) 1)) "southeast"))
+		  (t 
+		  	(playCapture board playerColor (rest listOfPieces))))))
 		  
 
 ;; Loops through list of available pieces and returns list of super pieces
