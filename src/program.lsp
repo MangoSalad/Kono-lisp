@@ -1521,11 +1521,11 @@
 			(
 		;; Return original coordinate and final coordinate - else send nil.
 		(cond 	((string= blockFromNorthEast "W")
-				(list (list (- (first opponentCoordinates) 2) (+ (first (rest opponentCoordinates)) 2)) finalCoordinates))
+				(list (list (- (first opponentCoordinates) 2) (+ (first (rest opponentCoordinates)) 2)) finalCoordinates "southwest"))
 				((string= blockFromNorth "W")
-				(list (list (- (first opponentCoordinates) 2) (first (rest opponentCoordinates))) finalCoordinates))
+				(list (list (- (first opponentCoordinates) 2) (first (rest opponentCoordinates))) finalCoordinates "southeast"))
 				((string= blockFromEast "W")
-				(list (list (first opponentCoordinates) (+ (first (rest opponentCoordinates)) 2)) finalCoordinates))
+				(list (list (first opponentCoordinates) (+ (first (rest opponentCoordinates)) 2)) finalCoordinates "northwest"))
 				(t 
 				nil)
 		)))))))
@@ -1579,11 +1579,11 @@
 			(
 		;; Return original coordinate and final coordinate - else send nil.
 		(cond 	((string= blockFromNorthWest "W")
-				(list (list (- (first opponentCoordinates) 2) (- (first (rest opponentCoordinates)) 2)) finalCoordinates))
+				(list (list (- (first opponentCoordinates) 2) (- (first (rest opponentCoordinates)) 2)) finalCoordinates "southeast"))
 				((string= blockFromNorth "W")
-				(list (list (- (first opponentCoordinates) 2) (first (rest opponentCoordinates))) finalCoordinates))
+				(list (list (- (first opponentCoordinates) 2) (first (rest opponentCoordinates))) finalCoordinates "southwest"))
 				((string= blockFromWest "W")
-				(list (list (first opponentCoordinates) (- (first (rest opponentCoordinates)) 2)) finalCoordinates))
+				(list (list (first opponentCoordinates) (- (first (rest opponentCoordinates)) 2)) finalCoordinates "northeast"))
 				(t 
 				nil)
 		)))))))
@@ -1867,7 +1867,12 @@
 ;; Function Name: playComputer 
 ;; Purpose: ..
 ;; Parameters: 
-;;             none.
+;;             players, players list containing players and their colors.
+;;			   board, contains board object.
+;;			   currentTurn, atom representing player turn.
+;;			   scores, contains computer and human tournament scores.
+;;			   playerColor, color of the player.
+;;			   opponentColor, color of the opponent player.
 ;; Return Value: none.
 ;; Local Variables: 
 ;;             none.
@@ -1876,78 +1881,127 @@
 ;; Assistance Received: none 
 ;; ********************************************************************* */
 (defun playComputer (players board scores playerColor opponentColor)
-	;; get opponent's coordinates
-	(let* ( ;; Opponent Coordinates
-			(opponentCoordinates 
-				(cond ((string= opponentColor "W")
-						(getClosestOpponent (rev (flatten board)) (length board) opponentColor 1))
-					  ((string= opponentColor "B")
-					  	(getClosestOpponent (flatten board) (length board) opponentColor 1))))
-			;; List of computer pieces.
-			(listOfPieces (getFriendlyPieces (flatten board) (length board) playerColor 1))
-			;; Coordinates should the computer need to Block West"
-			(blockEast (playDefenseEast board opponentCoordinates playerColor))
-			(blockWest (playDefenseWest board opponentCoordinates playerColor))
-			(shouldRetreat (checkRetreat board listofPieces playerColor))
-			(retreat (cond ((eq shouldRetreat t) (playRetreat board playerColor listOfPieces)) (t ())))
-			(shouldCapture (checkCapture board playerColor listOfPieces))
-			(capture (cond ((not (eq shouldCapture nil)) (playCapture board playerColor shouldCapture)) (t ())))
-			(attack (playAttack board playerColor listOfPieces)))
+	;; Get coordinates fo closest opponent.
+	(let* ( 
+		(opponentCoordinates 
+			(cond ((string= opponentColor "W")
+					(getClosestOpponent (rev (flatten board)) (length board) opponentColor 1))
+					((string= opponentColor "B")
+					(getClosestOpponent (flatten board) (length board) opponentColor 1))))
+		;; List of computer pieces.
+		(listOfPieces (getFriendlyPieces (flatten board) (length board) playerColor 1))
+		
+		;; Strategy: Check if can capture, then block, then retreat, then play forward.
+		;; Coordinates either contain the piece to move, and the final destination. OR coordiantes contain NIL which means that piece should not be moved according to that strategy.
+
+		;; Coordinates if piece will be moved to block piece on the east.
+		(blockEast (playDefenseEast board opponentCoordinates playerColor))
+		;; Coordinates if piece will be moved to block piece on the west.
+		(blockWest (playDefenseWest board opponentCoordinates playerColor))
+		;; Check if computer should retreat.
+		(shouldRetreat (checkRetreat board listofPieces playerColor))
+		;; Coordinates of piece to retreat.
+		(retreat (cond ((eq shouldRetreat t) (playRetreat board playerColor listOfPieces)) (t ())))
+		;; Check if computer should capture.
+		(shouldCapture (checkCapture board playerColor listOfPieces))
+		;; Coordiantes of piece to capture.
+		(capture (cond ((not (eq shouldCapture nil)) (playCapture board playerColor shouldCapture)) (t ())))
+		;; Coordinates of forward advance.
+		(attack (playAttack board playerColor listOfPieces)))
 		(cond 	
-				((AND (not (eq shouldCapture nil)) (not (eq capture nil)))
+				;; Check to capture piece.
+			  (	(AND (not (eq shouldCapture nil)) (not (eq capture nil)))
 				(displayCapture (first capture) (first (rest capture)) (first (rest (rest capture))))
 				(playRound players (updateBoard board (first capture) (first (rest capture)) (list (validPieceToMove board (first capture)))) 'human scores))
 				
-				((not (eq blockEast nil))
+				;; Check to block piece from east.
+			  (	(not (eq blockEast nil))
 				(displayDefense (first blockEast) (first (rest blockEast)) (first (rest (rest blockEast))))
 				(playRound players (updateBoard board (first blockEast) (first (rest blockEast)) (list (validPieceToMove board (first blockEast)))) 'human scores))
 				
-				((not (eq blockWest nil))
+				;; Check to block piece from west.
+			  (	(not (eq blockWest nil))
 				(displayDefense (first blockWest) (first (rest blockWest)) (first (rest (rest blockWest))))
 				(playRound players (updateBoard board (first blockWest) (first (rest blockWest)) (list (validPieceToMove board (first blockWest)))) 'human scores))
 				
-				((eq shouldRetreat t)
+				;; Check to retreat.
+			  (	(eq shouldRetreat t)
 				(displayRetreat (first retreat) (first (rest retreat)) (first (rest (rest retreat))))
 				(playRound players (updateBoard board (first retreat) (first (rest retreat)) (list (validPieceToMove board (first retreat)))) 'human scores))
 				
-				(t
+				;; Play by moving forward.
+			  (t
 				(displayAttack (first attack) (first (rest attack)) (first (rest (rest attack))))
 				(playRound players (updateBoard board (first attack) (first (rest attack)) (list (validPieceToMove board (first attack)))) 'human scores)))))
 
+;; /* ********************************************************************* 
+;; Function Name: playHelp 
+;; Purpose: Logic for the round. Alternates each player for the turn and holds board state.
+;; Parameters: 
+;;             players, players list containing players and their colors.
+;;			   board, contains board object.
+;;			   currentTurn, atom representing player turn.
+;;			   scores, contains computer and human tournament scores.
+;;			   playerColor, color of the player.
+;;			   opponentColor, color of the opponent player.
+;;			   currentTurn, current player.
+;; Return Value: none.
+;; Local Variables: 
+;;             choice, user choice for the menu.
+;;			   playerColor, current player's color.
+;;			   opponentColor, opponent player's color.
+;; Algorithm: 
+;;             1) Get the coordinates fo the closest opponent.
+;;			   2) Get a list of coordinates of player pieces.
+;;			   3) ...
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun playHelp (players board scores playerColor opponentColor currentTurn)
-	(let* ( ;; Opponent Coordinates
-			(opponentCoordinates 
-				(cond ((string= opponentColor "W")
-						(getClosestOpponent (rev (flatten board)) (length board) opponentColor 1))
-					  ((string= opponentColor "B")
-					  	(getClosestOpponent (flatten board) (length board) opponentColor 1))))
-			;; List of computer pieces.
-			(listOfPieces (getFriendlyPieces (flatten board) (length board) playerColor 1))
-			;; Coordinates should the computer need to Block West"
-			(blockEast (playDefenseEast board opponentCoordinates playerColor))
-			(blockWest (playDefenseWest board opponentCoordinates playerColor))
-			(shouldRetreat (checkRetreat board listofPieces playerColor))
-			(retreat (cond ((eq shouldRetreat t) (playRetreat board playerColor listOfPieces)) (t ())))
-			(shouldCapture (checkCapture board playerColor listOfPieces))
-			(capture (cond ((not (eq shouldCapture nil)) (playCapture board playerColor shouldCapture)) (t ())))
-			(attack (playAttack board playerColor listOfPieces)))
-
-		(cond 	
-				((AND (not (eq shouldCapture nil)) (not (eq capture nil)))
-				(displayHelpCapture (first capture) (first (rest capture)) (first (rest (rest capture)))))
-				
-				((not (eq blockEast nil))
-				(displayHelpDefense (first blockEast) (first (rest blockEast)) (first (rest (rest blockEast)))))
-				
-				((not (eq blockWest nil))
-				(displayHelpDefense (first blockWest) (first (rest blockWest)) (first (rest (rest blockWest)))))
-				
-				((eq shouldRetreat t)
-				(displayHelpRetreat (first retreat) (first (rest retreat)) (first (rest (rest retreat)))))
-				
-				(t
-				(displayHelpAttack (first attack) (first (rest attack)) (first (rest (rest attack)))))))
+	(let* ( 
+		;; Coordinates of the closest opponent. Used for blocking opponent piece.
+		(opponentCoordinates 
+			(cond (	(string= opponentColor "W")
+					(getClosestOpponent (rev (flatten board)) (length board) opponentColor 1))
+				  (	(string= opponentColor "B")
+					(getClosestOpponent (flatten board) (length board) opponentColor 1))))
 		
+		;; List of player pieces.
+		(listOfPieces (getFriendlyPieces (flatten board) (length board) playerColor 1))
+
+		;; Strategy: Check if can capture, then block, then retreat, then play forward.
+		;; Coordinates either contain the piece to move, and the final destination. OR coordiantes contain NIL which means that piece should not be moved according to that strategy.
+
+		;; Coordinates if piece will be moved to block piece on the east.
+		(blockEast (playDefenseEast board opponentCoordinates playerColor))
+		;; Coordinates if piece will be moved to block piece on the west.
+		(blockWest (playDefenseWest board opponentCoordinates playerColor))
+		;; Check if piece should be retreated.
+		(shouldRetreat (checkRetreat board listofPieces playerColor))
+		;; Coordinates of piece to retreat.
+		(retreat (cond ((eq shouldRetreat t) (playRetreat board playerColor listOfPieces)) (t ())))
+		;; Check if piece should be captured.
+		(shouldCapture (checkCapture board playerColor listOfPieces))
+		;; Coordinates of piece to capture.
+		(capture (cond ((not (eq shouldCapture nil)) (playCapture board playerColor shouldCapture)) (t ())))
+		;; Coordiantes of piece to move forward.
+		(attack (playAttack board playerColor listOfPieces)))
+
+			;; Capture piece.
+		(cond (	(AND (not (eq shouldCapture nil)) (not (eq capture nil)))
+				(displayHelpCapture (first capture) (first (rest capture)) (first (rest (rest capture)))))
+			;; Block from east.
+			  (	(not (eq blockEast nil))
+				(displayHelpDefense (first blockEast) (first (rest blockEast)) (first (rest (rest blockEast)))))
+			;; Block from west.
+			  (	(not (eq blockWest nil))
+				(displayHelpDefense (first blockWest) (first (rest blockWest)) (first (rest (rest blockWest)))))
+			;; Retreat.
+			  (	(eq shouldRetreat t)
+				(displayHelpRetreat (first retreat) (first (rest retreat)) (first (rest (rest retreat)))))
+			;; Attack forward.
+			  (t
+				(displayHelpAttack (first attack) (first (rest attack)) (first (rest (rest attack)))))))	
+	;; Return back to playRound logic.
 	(playRound players board 'human scores))
 
 
@@ -1955,98 +2009,153 @@
 ;; Function Name: playRound 
 ;; Purpose: Logic for the round. Alternates each player for the turn and holds board state.
 ;; Parameters: 
-;;             none.
+;;             players, players list containing players and their colors.
+;;			   board, contains board object.
+;;			   currentTurn, atom representing player turn.
+;;			   scores, contains computer and human tournament scores.
 ;; Return Value: none.
 ;; Local Variables: 
-;;             none.
+;;             choice, user choice for the menu.
+;;			   playerColor, current player's color.
+;;			   opponentColor, opponent player's color.
 ;; Algorithm: 
-;;             1) ...
+;;             1) Announce current player.
+;;			   2) Display the board.
+;;			   4) Check if there is a winner (game condition has been met.)
+;;			   5) Display menu.
+;;			   6) Read input from user for menu choice.
+;;			   7) If user selected to save game, then save game and quit.
+;;			   8) If user selected to play game, then play game.
+;;			   9) If user selected help mode, then call help function.
+;;			   10) If user selected to quit, then quit game.
 ;; Assistance Received: none 
 ;; ********************************************************************* */
 (defun playRound (players board currentTurn scores)
-		(format t "It is ~A's turn. ~%" currentTurn)
+	;; Announce the current player. 
+	(format t "It is ~A's turn. ~%" currentTurn)
 
-		;; Display Board.
-		(displayBoard board 0 (length board))
-		
-		;; Check if there is a winner.
-		(cond 	((eq (checkwinner board) t)
-					(let* ((roundScores (getWinner board players)))
-						(tournamentControl roundScores scores))))
-		
-		;; Display Menu.
-		(let*( 	(choice (readMenu currentTurn))
-				(playerColor (getPlayerColor players currentTurn))
-				(opponentColor (getOpponentColor players currentTurn)))
+	;; Display Board.
+	(displayBoard board 0 (length board))
+	
+	;; Check if there is a winner.
+	(cond 	((eq (checkwinner board) t)
+				(let* ((roundScores (getWinner board players)))
+					(tournamentControl roundScores scores))))
+	
+	;; Display Menu.
+	(let*( 	(choice (readMenu currentTurn))
+			(playerColor (getPlayerColor players currentTurn))
+			(opponentColor (getOpponentColor players currentTurn)))
 
-				;; Save Game choice
-		(cond 	((string= (first choice) 'save)
-					(saveToFile (readSaveFileName) players board currentTurn scores)
-					(Quit))
+	;; Player chose to save game.
+	(cond (	(string= (first choice) 'save)
+			(saveToFile (readSaveFileName) players board currentTurn scores)
+			(Quit))
+	;; Player chose to play game.
+		  (	(string= (first choice) 'play)
+		  	;; Human is playing.
+			(cond (	(string= currentTurn "HUMAN")
+					(playHuman players board scores playerColor))
+			;; Computer is playing.
+				  (	(string= currentTurn "COMPUTER")
+					(playComputer players board scores playerColor opponentColor))))		
+	;; Player chose help mode.
+		 (	(string= (first choice) 'help)
+			(playHelp players board scores playerColor opponentColor currentTurn))
+	;; Player chose to quit.
+		 (	(string= (first choice) 'quit)
+			(print "Quiting game")
+			(Quit)))))
 
-				;; Play game logic		
-				((string= (first choice) 'play)
-					(cond 	((string= currentTurn "HUMAN")
-								(playHuman players board scores playerColor))
-							((string= currentTurn "COMPUTER")
-								(playComputer players board scores playerColor opponentColor))))
-												
-				;; Help mode.
-				((string= (first choice) 'help)
-					(playHelp players board scores playerColor opponentColor currentTurn))
-
-				;; Quit game.
-				((string= (first choice) 'quit)
-					(print "Quiting game")
-					(Quit)))))
-
-;; Begins the tournament from loading game from file.
+;; /* ********************************************************************* 
+;; Function Name: loadGame 
+;; Purpose: Starts round from a game file. Loads existing tournament.
+;; Parameters: 
+;;			   None.
+;; Return Value: None.
+;; Local Variables: 
+;;			   fileName, name of game file to be read.
+;;			   gameSave, contents of the game file.
+;; Algorithm: 
+;;             1) Read the name of the game file.
+;;			   2) Parse file.
+;;			   3) Start new round using game file.
+;; Assistance Received: None.
+;; ********************************************************************* */	
 (defun loadGame()
-	(let*	(	(fileName (readFileName))
-				(gameSave (openFile fileName))
-				;;(board)
-				
-			
-			)
-				;; Start round from file save.			
-				(print (rest (rest (rest gameSave))))
-				(playRound (first gameSave) (first (rest gameSave)) (first (rest (rest gameSave))) (rest (rest (rest gameSave))))
-			
-			))
+	(let* (	(fileName (readFileName))
+			(gameSave (openFile fileName)))
+			;; Start round from file save.
+			(playRound (first gameSave) (first (rest gameSave)) (first (rest (rest gameSave))) (rest (rest (rest gameSave))))))
 
-;; Begins tournament from a new game.
+;; /* ********************************************************************* 
+;; Function Name: initGame 
+;; Purpose: Starts new tournament and game.
+;; Parameters: 
+;;			   None.
+;; Return Value: None.
+;; Local Variables: 
+;;			   boardSize, the user-input for board size.
+;;			   board, board list generated using board size.
+;;			   players, holds players and their player color.
+;; Algorithm: 
+;;             1) Read the board size from user.
+;;			   2) Generate the board.
+;;			   3) Let the first player choose their player color.
+;;			   4) Announce players and colors.
+;;			   5) Call playRound function to play the round.
+;; Assistance Received: None.
+;; ********************************************************************* */	
 (defun initGame()
-	(let* 	(	;; User is asked for board size at the start of round.
-				(boardSize (readBoardSize))
-				;; Creates board using n size.
-				(board (makeBoard boardSize boardSize))
-				;; choose first player and board.
-				(players (chooseColor (choosefirstPlayer))))
-				
-				(format t "~A is ~A. ~%" (first players) (first (rest players)))
-				(format t "~A is ~A. ~%" (first (rest (rest players))) (first (rest (rest (rest players)))))
-				;;make human (first players)
-				(playRound players board 'human (list 'computer 0 'human 0))
-				
-				))
+	(let* (	
+		;; User is asked for board size at the start of round.
+		(boardSize (readBoardSize))
+		;; Creates board using n size.
+		(board (makeBoard boardSize boardSize))
+		;; Choose first player and board.
+		(players (chooseColor (choosefirstPlayer))))
+		;; Announce players and their colors.
+		(format t "~A is ~A. ~%" (first players) (first (rest players)))
+		(format t "~A is ~A. ~%" (first (rest (rest players))) (first (rest (rest (rest players)))))
+		;; Play round.
+		(playRound players board 'human (list 'computer 0 'human 0))))
 
-;; Starts new round after finishing old round.
+;; /* ********************************************************************* 
+;; Function Name: newRound 
+;; Purpose: Starts new round in the tournament.
+;; Parameters: 
+;;			   scores, tournament scores from overall game.
+;;			   firstPlayer, winner of the last round.
+;; Return Value: None.
+;; Local Variables: 
+;;			   boardSize, the user-input for board size.
+;;			   board, board list generated using board size.
+;;			   players, holds players and their player color.
+;; Algorithm: 
+;;             1) Read the board size from user.
+;;			   2) Generate the board.
+;;			   3) Let the first player choose their player color.
+;;			   4) Announce players and colors.
+;;			   5) Call playRound function to play the round.
+;; Assistance Received: None.
+;; ********************************************************************* */	
 (defun newRound(scores firstPlayer)
-	(let* 	(	;; User is asked for board size at the start of round.
-				(boardSize (readBoardSize))
-				;; Creates board using n size.
-				(board (makeBoard boardSize boardSize))
-				
-				(players (cond 	((string= firstPlayer "COMPUTER")
-								(chooseColor (list 'computer)))
-								(t 
-								(chooseColor (list 'human))))))
-				;; choose first player and board.
-				
-				(format t "~A is ~A. ~%" (first players) (first (rest players)))
-				(format t "~A is ~A. ~%" (first (rest (rest players))) (first (rest (rest (rest players)))))
-
-				(playRound players board firstPlayer scores)))
+	(let* (	
+		;; User is asked for board size at the start of round.
+		(boardSize (readBoardSize))
+		;; Creates board using n size.
+		(board (makeBoard boardSize boardSize))
+		;; Create player object.	
+		(players (cond ((string= firstPlayer "COMPUTER")
+						(chooseColor (list 'computer)))
+					   (t 
+						(chooseColor (list 'human))))))
+		
+		;; Announce players and colors.
+		(format t "~A is ~A. ~%" (first players) (first (rest players)))
+		(format t "~A is ~A. ~%" (first (rest (rest players))) (first (rest (rest (rest players)))))
+		;; Play round.
+		(playRound players board firstPlayer scores)))
 
 ;; Ask user for starting a new game or load a previous one from file.
 (let* ( (fileChoice (readPlayFromFile)))

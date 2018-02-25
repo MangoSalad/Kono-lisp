@@ -16,10 +16,10 @@
 
    ; Board:
    ( ( O  O  BB  O  O)
+     ( O  O  O  B  O )
+     ( O  O  O  W  O )
      ( O  O  O  O  O )
-     ( O  O  O  O  BB )
-     ( O  WW  O  O  O )
-     ( O  O  O  O  O ) )
+     ( WW  O  O  O  O ) )
 
    ; Next Player:
    Computer
