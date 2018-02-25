@@ -1,16 +1,16 @@
 ( 
 ; Round: 
-3 
+4 
 ; Computer Score: 
-17 
+5 
 ; Computer Color: 
 BLACK 
 ; Human Score: 
-14 
+10 
 ; Human Color: 
 WHITE 
 ; Board: 
-((O BB O O O) (O O B O O) (O O O O O) (O W O W O) (O O O O O)) 
+((W W W W W) (W O O O W) (O O O O O) (B O O O B) (B B B B B)) 
 ; Next Player: 
 COMPUTER 
 )

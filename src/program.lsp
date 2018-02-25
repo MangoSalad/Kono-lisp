@@ -281,7 +281,6 @@
 
 ;; checks if the piece is eligible to become a super piece.
 (defun checkSuperPiece(boardlength piece coordinate)
-	(print (first piece))
 	(cond ((AND (string= (first piece) "W") (= (first coordinate) boardlength))
 			(list (getSuperPieceForPlayerColor (first piece))))
 		  ((AND (string= (first piece) "B") (= (first coordinate) 1))
@@ -781,7 +780,7 @@
 		  ( (string= (first row) "W")
 			(append (list "W") (convertBoardRowToFile (rest row))))
 		  ( (string= (first row) "w")
-			(append (list "BB") (convertBoardRowToFile (rest row))))
+			(append (list "WW") (convertBoardRowToFile (rest row))))
 		  ( (string= (first row) "+")
 			(append (list "O") (convertBoardRowToFile (rest row))))))
 
@@ -818,8 +817,7 @@
 	(with-open-file (stream fileName :direction :output :if-exists :supersede)
 		(format stream "( ~%")
 		(format stream "; Round: ~%")
-		;; add actual round #
-		(format stream "~S ~%" 3)
+		(format stream "~S ~%" (first (rest (rest (rest (rest scores))))))
 		(format stream "; Computer Score: ~%")
 		(format stream "~S ~%" (first (rest scores)))
 		(format stream "; Computer Color: ~%")
@@ -894,7 +892,7 @@
 							;; Convert file board into game board.
 							(list (fileBoardToGameBoard board)))
 								(list nextPlayer))
-									(list 'computer computerScore 'human humanScore)))))
+									(list 'computer computerScore 'human humanScore roundNum)))))
 
 ;; /* ********************************************************************* 
 ;; Function Name: getPlayerColor 
@@ -1314,10 +1312,10 @@
 			(list playerTwo (- scoreTwo scoreOne)))
 		  (	(= scoreOne scoreTwo)
 			(format t "There is no clear winner. It is a draw. ~%")
-			())))
+			(list playerOne 0))))
 
 ;; /* ********************************************************************* 
-;; Function Name: calculateWinner 
+;; Function Name: getWinner 
 ;; Purpose: Announces scores for the current round and calls function to calculate Winner.
 ;; Parameters: 
 ;;			   board, game board.
@@ -1408,9 +1406,9 @@
 ;; ********************************************************************* */	
 (defun calculateTournamentScore (roundScores tournamentScores)
 	(cond (	(string= (first roundScores) "COMPUTER")
-			(list 'computer (+ (first (rest tournamentScores)) (first (rest roundScores))) 'human (first (rest (rest (rest tournamentScores))))))
+			(list 'computer (+ (first (rest tournamentScores)) (first (rest roundScores))) 'human (first (rest (rest (rest tournamentScores)))) (+ 1 (first (rest (rest (rest (rest tournamentScores))))))))
 		  (	(string= (first roundScores) "HUMAN")
-			(list 'computer (first (rest tournamentScores)) 'human (+ (first (rest (rest (rest tournamentScores)))) (first (rest roundScores)))))))
+			(list 'computer (first (rest tournamentScores)) 'human (+ (first (rest (rest (rest tournamentScores)))) (first (rest roundScores))) (+ 1 (first (rest (rest (rest (rest tournamentScores))))))))))
 
 ;; /* ********************************************************************* 
 ;; Function Name: playHuman 
@@ -1438,7 +1436,7 @@
 		(isValidPiece (validPieceToMove board coordinates))
 		;; checks if the piece at new coordinates is "+"
 		(isValidDirection (validDirectionToMove board finalCoordinates)))
-		(cond (	(AND (OR (string= isValidPiece playerColor) (string= isValidPiece (getSuperPieceForPlayerColor playerColor))) (string= isValidDirection "+") )   
+		(cond (	(AND (OR (string= isValidPiece playerColor) (string= isValidPiece (getSuperPieceForPlayerColor playerColor))) (OR (string= isValidDirection (getSuperPieceForPlayerColor (getOppositePlayerColor playerColor))) (OR (string= isValidDirection "+") (string= isValidDirection (getOppositePlayerColor playerColor)))))
 				(playRound players (updateBoard board coordinates finalCoordinates (list isValidPiece)) 'computer scores))
 			  (t
 				(princ "Not a valid move. Try again.") 
@@ -2225,7 +2223,9 @@
 			(playHelp players board scores playerColor opponentColor currentTurn))
 	;; Player chose to quit.
 		 (	(string= (first choice) 'quit)
-			(print "Quiting game")
+			(format t "Quiting game. Deducting 5 points for quiting. ~%")
+			(announceTournamentScores 'human (- (first (rest (rest (rest scores)))) 5))
+			(announceTournamentScores 'computer (first (rest scores))) 
 			(Quit)))))
 
 ;; /* ********************************************************************* 
@@ -2279,7 +2279,7 @@
 		(format t "~A is ~A. ~%" (first players) (first (rest players)))
 		(format t "~A is ~A. ~%" (first (rest (rest players))) (first (rest (rest (rest players)))))
 		;; Play round.
-		(playRound players board 'human (list 'computer 0 'human 0))))
+		(playRound players board 'human (list 'computer 0 'human 0 1))))
 
 ;; /* ********************************************************************* 
 ;; Function Name: newRound 
