@@ -274,7 +274,6 @@
 
 (defun updateBoard (board oldCoordinates NewCoordinates piece)
 	;; update new coordinate
-	(print piece)
 	(updateCoordinates (updateCoordinates board (first NewCoordinates) (first (rest NewCoordinates)) (checkSuperPiece (length board) piece newCoordinates)) (first oldCoordinates) (first (rest oldCoordinates)) (list "+"))
 	;; remove old coordinate
 	)
@@ -1493,7 +1492,6 @@
 ;; Assistance Received: None.
 ;; ********************************************************************* */	
 (defun playDefenseEast(board opponentCoordinates playerColor)
-	(print "Playing Defense East")
 	;; check if can block from east, if so, return original coordinates and new coordinates
 
 	;; Computer is Black.
@@ -1560,7 +1558,6 @@
 ;; Assistance Received: None.
 ;; ********************************************************************* */	
 (defun playDefenseWest(board opponentCoordinates playerColor)
-	(print "Playing Defense West")
 	;; Computer is Black.
 	(cond (	(string= playerColor "B")	
 				(let* (	(validFinalCoordinate (validDirectionToMove board (list (+ (first opponentCoordinates) 1) (- (first (rest opponentCoordinates)) 1)) ))
@@ -2318,9 +2315,26 @@
 		;; Play round.
 		(playRound players board firstPlayer scores)))
 
-;; Ask user for starting a new game or load a previous one from file.
-(let* ( (fileChoice (readPlayFromFile)))
-		(cond 	((string= fileChoice "Y")
+;; /* ********************************************************************* 
+;; Function Name: startTournament 
+;; Purpose: Starts entire kono tournament. Asks user to start new game or load from file.
+;; Parameters: 
+;;			   None.
+;; Return Value: None.
+;; Local Variables: 
+;;			   fileChoice, either 'Y' or 'N' for whether game should be loaded from file
+;; Algorithm: 
+;;             1) Ask user if they want to load game from file.
+;;			   2) If yes, then load game.
+;;			   3) If no, start new game.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun startTournament ()
+	;; Ask user for starting a new game or load a previous one from file.
+	(let* ( (fileChoice (readPlayFromFile)))
+		(cond (	(string= fileChoice "Y")
 			 	(loadGame))
-				((string= fileChoice "N")
-				(initGame))))
+			  (	(string= fileChoice "N")
+				(initGame)))))
+
+(startTournament)
