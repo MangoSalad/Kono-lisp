@@ -1460,12 +1460,12 @@
 ;; return list with closest opponent coordinates
 (defun getClosestOpponent (board boardlength opponentColor index)	
 	(cond ((string= opponentColor "W")
-			(cond   ((string= (first board) "W")
+			(cond   ((OR (string= (first board) "W") (string= (first board) "w"))
 						(list (- (+ boardlength 1) (ceiling index boardlength)) (- (+ boardlength 1) (cond ((= (rem index boardlength) 0) boardlength) (t (rem index boardlength))))))
 					(t 
 						(getClosestOpponent (rest board) boardlength opponentColor (+ index 1)))))
 			((string= opponentColor "B")
-			(cond   ((string= (first board) "B")
+			(cond   ((OR (string= (first board) "B") (string= (first board) "b"))
 					(list (ceiling index boardlength) (cond ((= (rem index boardlength) 0) boardlength) (t (rem index boardlength)))))
 				(t 
 					(getClosestOpponent (rest board) boardlength opponentColor (+ index 1))))))
@@ -1654,9 +1654,6 @@
 
 ;; returns coordinate of piece played and coordinate moved to
 (defun playCapture(board playerColor listOfPieces)
-	(cond ((eq (first listOfPieces) nil)
-			nil))
-
 	(let* ( (northWest (validDirectionToMove board (list (- (first (first listOfPieces)) 1) (- (first (rest (first listOfPieces))) 1))))
 			(northEast (validDirectionToMove board (list (- (first (first listOfPieces)) 1) (+ (first (rest (first listOfPieces))) 1))))
 			(southWest (validDirectionToMove board (list (+ (first (first listOfPieces)) 1) (- (first (rest (first listOfPieces))) 1))))
@@ -1674,8 +1671,10 @@
 		  ;; Check to move SouthEast
 		  ((string=  southEast (getOppositePlayerColor playerColor))
 		  (list (first listOfPieces) (list (+ (first (first listOfPieces)) 1) (+ (first (rest (first listOfPieces))) 1)) "southeast"))
+		  ((not (eq (rest listOfPieces) nil))
+		  	(playCapture board playerColor (rest listOfPieces)))
 		  (t 
-		  	(playCapture board playerColor (rest listOfPieces))))))
+		  	()))))
 		  
 
 ;; Loops through list of available pieces and returns list of super pieces
@@ -1894,7 +1893,6 @@
 			(shouldCapture (checkCapture board playerColor listOfPieces))
 			(capture (cond ((not (eq shouldCapture nil)) (playCapture board playerColor shouldCapture)) (t ())))
 			(attack (playAttack board playerColor listOfPieces)))
-
 		(cond 	
 				((AND (not (eq shouldCapture nil)) (not (eq capture nil)))
 				(displayCapture (first capture) (first (rest capture)) (first (rest (rest capture))))
