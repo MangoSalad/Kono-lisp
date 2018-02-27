@@ -1,0 +1,19 @@
+(
+  1
+  
+   14
+
+   Black
+
+   17
+
+   White
+
+   ( ( O  BB  BB  BB  BB )
+     ( BB  W  O  O  BB )
+     ( B  O  O  O  O )
+     ( O  W  O  W  WW ) 
+     ( O  WW  WW  WW  O ) )
+
+   Computer
+)

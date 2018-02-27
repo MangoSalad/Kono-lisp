@@ -1,0 +1,19 @@
+(
+  1
+  
+   0
+
+   White
+
+   0
+
+   Black
+
+   ( ( O  BB  BB  BB  BB )
+     ( BB  W  O  O  BB )
+     ( B  W  O  O  O )
+     ( O  W  O  W  O ) 
+     ( O  WW  WW  WW  O ) )
+
+   Human
+)
