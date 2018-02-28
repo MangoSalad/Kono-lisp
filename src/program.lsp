@@ -1212,7 +1212,7 @@
 				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
 			((AND (= index (+ (* boardlength (- boardlength 1)) 2)) (OR (string= (first board) "W") (string= (first board) "w")))
 				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (= index (+ (* boardlength (- boardlength 1)) 3)) (string= (first board) "W"))
+			((AND (= index (+ (* boardlength (- boardlength 1)) 3)) (OR (string= (first board) "W") (string= (first board) "w")))
 				(countWhiteScore (rest board) boardlength (+ score 5) (+ index 1)))
 			;; board size is 5
 			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 5))
@@ -2062,8 +2062,9 @@
 		(shouldCapture (checkCapture board playerColor listOfPieces))
 		;; Coordiantes of piece to capture.
 		(capture (cond ((not (eq shouldCapture nil)) (playCapture board playerColor shouldCapture)) (t ())))
-		;; Coordinates of forward advance.
-		(attack (playAttack board playerColor listOfPieces)))
+		;; ;; Coordinates of forward advance.
+		(attack (cond ((OR (eq retreat nil) (eq capture nil)) (playAttack board playerColor listOfPieces)) (t ()))))
+
 		(cond 	
 				;; Check to capture piece.
 			  (	(AND (not (eq shouldCapture nil)) (not (eq capture nil)))
@@ -2140,7 +2141,7 @@
 		;; Coordinates of piece to capture.
 		(capture (cond ((not (eq shouldCapture nil)) (playCapture board playerColor shouldCapture)) (t ())))
 		;; Coordiantes of piece to move forward.
-		(attack (playAttack board playerColor listOfPieces)))
+		(attack (cond ((OR (eq retreat nil) (eq capture nil)) (playAttack board playerColor listOfPieces)) (t ()))))
 
 			;; Capture piece.
 		(cond (	(AND (not (eq shouldCapture nil)) (not (eq capture nil)))
