@@ -111,7 +111,12 @@
 ;; Local Variables: 
 ;;             none.
 ;; Algorithm: 
-;;             1) ...
+;;             1) Recusive function where base case is when column index is 0.
+;;			   2) Continue to loop through the function passing each row until column index is 0.
+;;			   4) If row index is one, populate the entire row with "W" pieces.
+;;			   5) If row is second, given certain columns , place a "W" piece.
+;;			   6) If row is last row, populate entire row with "B" pieces.
+;;			   7) If row is second to last, given certain columns, place a "B" piece.
 ;; Assistance Received: none 
 ;; ********************************************************************* */
 (defun makeRowForBoard (column row boardSize)
@@ -148,7 +153,9 @@
 ;; Local Variables: 
 ;;             none.
 ;; Algorithm: 
-;;             1) ...
+;;             1) Populate each row of the board and append it to the board list.
+;;			   2) While board size is not zero, append makeBoard function output to the board.
+;;			   4) Decrement board size while appending output to board.
 ;; Assistance Received: none 
 ;; ********************************************************************* */
 (defun makeBoard (boardSize constSize)
@@ -163,34 +170,39 @@
 ;; Purpose: Prints board with coordinate grid to standard output.
 ;; Parameters: 
 ;;             board, board object.
-;;			   boardlength, initialized at 0.
-;;			   constantLength, constant length of the board.
+;;			   boardindex, initialized at 0. Increments with each pass.
+;;			   boardlength, constant length of the board.
 ;; Return Value: Board to standard output.
 ;; Local Variables: 
 ;;             None.
 ;; Algorithm: 
-;;             1) ...
+;;             1) Recursive function that loops through each row in board and prints it. 
+;;			   2) If there is no more row, print South and West compasses.
+;;		   	   3) If the board index is zero, print the North compass. And increment board index.
+;;			   4) Print the row and row number. Increment the board index.
+;;			   5) Using tail recursion, print the column numbers. 
+;;			   6) Using tail recursion, if there are no more column numbers, print the East compass.
 ;; Assistance Received: none 
 ;; ********************************************************************* */
-(defun displayBoard (board boardlength constantLength)
+(defun displayBoard (board boardindex boardlength)
 	(cond 
 			;; If there is no more board left, print compasses South and West.
 		  (	(= (length board) 0)
 			(format t "~A ~%" "S")  
 			(format t "~A  " "W"))
-			;; If the the board is starting to print (boardlength = 0), then print North compass.
-		  (	(= boardlength 0)
+			;; If the the board is starting to print (boardindex = 0), then print North compass.
+		  (	(= boardindex 0)
 			(format t "~D ~%" 'N)
 			;; Call displayBoard.
-			(displayBoard board (+ boardlength 1) constantLength)	)
+			(displayBoard board (+ boardindex 1) boardlength)	)
 			;; Print the row for the board, row #.
 		  (t 
-			(format t "~D ~A ~%" boardlength (first board))
-			(displayBoard (rest board) (+ boardlength 1) constantLength)
+			(format t "~D ~A ~%" boardindex (first board))
+			(displayBoard (rest board) (+ boardindex 1) boardlength)
 			;; Print column #.
 			(format t "~D " (length board))
 			;; If there are no more columns left, print East compass.
-			(cond (	(= (length board) constantLength)
+			(cond (	(= (length board) boardlength)
 					(format t "~D ~%" 'E))))))
 
 ;; /* ********************************************************************* 
@@ -198,13 +210,14 @@
 ;; Purpose: Returns a list containing a row from the board given the row number.
 ;; Parameters: 
 ;;             board, board object.
-;;			   boardlength, initialized at 0.
-;;			   constantLength, constant length of the board.
-;; Return Value: Board to standard output.
+;;			   boardlength, constant length of the board.
+;;			   row, the row number of the row to return.
+;; Return Value: List of the board at the given row number.
 ;; Local Variables: 
 ;;             None.
 ;; Algorithm: 
-;;             1) ...
+;;             1) If the length of the board is equal to the row number, return the row.
+;;			   2) Else call function and decrement one row list from the board.
 ;; Assistance Received: none 
 ;; ********************************************************************* */
 (defun filterRows (board boardlength row)
@@ -217,14 +230,15 @@
 ;; Function Name: filterColumns 
 ;; Purpose: Returns a list containing a column from the board given the column number.
 ;; Parameters: 
-;;             board, board object.
-;;			   boardlength, initialized at 0.
-;;			   constantLength, constant length of the board.
-;; Return Value: Board to standard output.
+;;             row, row list.
+;;			   boardlength, constant length of the board.
+;;			   column, the column number of the row to return.
+;; Return Value: List of the column at column number.
 ;; Local Variables: 
 ;;             None.
 ;; Algorithm: 
-;;             1) ...
+;;             1) If the length of the row is equal to the column number, return the column.
+;;			   2) Else call function and decrement one column list from the row.
 ;; Assistance Received: none 
 ;; ********************************************************************* */
 (defun filterColumns (row boardlength column)
@@ -232,64 +246,170 @@
 			(first row))
 		  (t (filterColumns (rest row) boardlength column))))
 
-;; Checks if a given piece can be moved.
-;; returns piece color as a check, if not piece ,then clearly cannot move - allows computer and human to do their own checks
+;; /* ********************************************************************* 
+;; Function Name: validPieceToMove 
+;; Purpose: Checks if a given piece at coordinates can be moved. Returns piece color at coordinates. Validation is done at function that calls.
+;; Parameters: 
+;;             board, board object.
+;;			   coordinates, list containing row and column of piece.
+;; Return Value: Returns the piece at coordinates. 
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Check if the row or column is less than zero. IF it is, return a X signalling that it is not a valid piece to move.
+;;			   2) Check if the row or column is greater than the length of the board. IF it is, return a X signalling that it is not a valid piece to move.
+;;			   3) Filter the columns and rows to return the piece located at that coordinate.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun validPieceToMove (board coordinates)
-	;;rest thru rows,
-	;; rest thru columns, 
-	(cond ((OR (<= (first coordinates) 0) (<= (first (rest coordinates)) 0))
+	(cond ;; Check if row or coordinate is less than zero.
+		  (	(OR (<= (first coordinates) 0) (<= (first (rest coordinates)) 0))
 			'x)
-		  ((OR (> (first coordinates) (length board)) (> (first (rest coordinates)) (length board)))
+		  ;; Check if row or coordinate is greater than legth of board.
+		  (	(OR (> (first coordinates) (length board)) (> (first (rest coordinates)) (length board)))
 			'x)
+		  ;; Filter columns and row to return the piece at the provided coordinates.
 		  (t
 			(filterColumns (filterRows board (+ (length board) 1) (first coordinates)) (+ (length board) 1) (first (rest coordinates))))))
 
-;; Checks if the new coordinates are not occuping piece and direction is not out of bounds
+;; /* ********************************************************************* 
+;; Function Name: validDirectionToMove 
+;; Purpose: Checks if the coordinates provided are a valid place to move by returning the piece located at that coordinate.
+;; Parameters: 
+;;             board, board object.
+;;			   finalCoordinates, list containing row and column of place to move to.
+;; Return Value: Returns the piece at finalCoordinates in board.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Check if the row or column is less than zero. If it is, return a X signalling that it is not a valid piece to move to.
+;;			   2) Check if the row or column is greater than the length of the board. IF it is, return a X signalling that it is not a valid piece to move to.
+;;			   3) Filter the columns and rows to return the piece located at that coordinate.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun validDirectionToMove (board finalCoordinates)
-	(cond ((OR (<= (first finalCoordinates) 0) (<= (first (rest finalCoordinates)) 0))
+	(cond ;; Check if coordinate is less than zero.
+		  (	(OR (<= (first finalCoordinates) 0) (<= (first (rest finalCoordinates)) 0))
 			'x)
-		  ((OR (> (first finalCoordinates) (length board)) (> (first (rest finalCoordinates)) (length board)))
+		  ;; Check if coordinate is greater than length of the board.
+		  (	(OR (> (first finalCoordinates) (length board)) (> (first (rest finalCoordinates)) (length board)))
 			'x)
+		  ;; Return piece located at the coordinate.
 		  (t
 		   	(filterColumns (filterRows board (+ (length board) 1) (first finalCoordinates)) (+ (length board) 1) (first (rest finalCoordinates))))))
 
-
-;; Returns row with updated piece at specific column index
+;; /* ********************************************************************* 
+;; Function Name: updateColumn 
+;; Purpose: Updates the piece at a given column index of a row. 
+;; Parameters: 
+;;             row, row list.
+;;			   boardlength, length of the board.
+;;			   columnIndex, index of piece to update.
+;;			   piece, piece that will replace existing piece at columnIndex.
+;;			   finalCoordinates, list containing row and column of place to move to.
+;; Return Value: Returns a row list with the updated piece at the specific column index.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If the column index equals the length of the row, append the new peice to the rest of the row.
+;;			   2) If not, call the function recursively while prepending the first of the row using head recursion.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun updateColumn (row boardlength columnIndex piece)
-	(cond ( (= (length row) (- boardlength columnIndex) )
+	(cond ;; Found columnIndex
+		  ( (= (length row) (- boardlength columnIndex) )
 			(append piece (rest row)))
+		  ;; Loop through the remaning row. Prepend first of the row using head recursion.
 		  (t 
-		  	(cons (first row) (updateColumn (rest row) boardlength columnIndex piece)
-			))))
+		  	(cons (first row) (updateColumn (rest row) boardlength columnIndex piece)))))
 
+;; /* ********************************************************************* 
+;; Function Name: updateRow 
+;; Purpose: Updates the piece at a given column index of a row. 
+;; Parameters: 
+;;             board, board object.
+;;			   boardlength, length of the board.
+;;			   rowIndex, index of row to update.
+;;			   row, row that will replace row and rowIndex.
+;; Return Value: Returns the board object with the updated board.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If the row index equals the length of the board, append the new row to the rest of the board.
+;;			   2) If not, call the function recursively while prepending the first of the board using head recursion.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun updateRow (board boardlength rowIndex row)
-	(cond ( (= (length board) (- boardlength rowIndex) )
+	(cond ;; Found row at row index. Append row to the rest of the board.
+		  ( (= (length board) (- boardlength rowIndex) )
 			(append row (rest board)))
+		  ;; Recursively call the function with the rest of the board. Using head recursion, prepend the first board.
 		  (t 
-		  	(cons (first board) (updateRow (rest board) boardlength rowIndex row)
-			))))
+		  	(cons (first board) (updateRow (rest board) boardlength rowIndex row)))))
 
+;; /* ********************************************************************* 
+;; Function Name: updateCoordinates 
+;; Purpose: Holds logic to update coordinates.
+;; Parameters: 
+;;             board, board object.
+;;			   row, row number of piece to update.
+;;			   column, column number of piece to update.
+;;			   piece, piece that will replace existing piece.
+;; Return Value: Returns new board with updated piece at coordinates.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Call updateRow.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun updateCoordinates (board row column piece)
 	(updateRow board (+ (length board) 1) row (list (updateColumn (filterRows board (+ (length board) 1) row) (+ (length board) 1) column piece))))
 
+;; /* ********************************************************************* 
+;; Function Name: updateBoard 
+;; Purpose: Holds logic to update board. It will update new coordinate and remove old coordinate.
+;; Parameters: 
+;;             board, board object.
+;;			   oldCoordinates, list containing old row and old column of piece.
+;;			   newCoordinates, list containing new row and new column of piece.
+;;			   piece, piece that will replace existing piece.
+;; Return Value: Returns new board with updated pieces at coordinates.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Call updateCoordinates.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun updateBoard (board oldCoordinates NewCoordinates piece)
-	;; update new coordinate
-	(updateCoordinates (updateCoordinates board (first NewCoordinates) (first (rest NewCoordinates)) (checkSuperPiece (length board) piece newCoordinates)) (first oldCoordinates) (first (rest oldCoordinates)) (list "+"))
-	;; remove old coordinate
-	)
+	;; Update new coordinate and remove old coordinate.
+	(updateCoordinates (updateCoordinates board (first NewCoordinates) (first (rest NewCoordinates)) (checkSuperPiece (length board) piece newCoordinates)) (first oldCoordinates) (first (rest oldCoordinates)) (list "+")))
 
-;; checks if the piece is eligible to become a super piece.
+;; /* ********************************************************************* 
+;; Function Name: checkSuperPiece 
+;; Purpose: Checks if the piece at coordinate is eligible to become a super piece.
+;; Parameters: 
+;;             boardlength, length of the board.
+;;			   piece, piece to check eligibility for upgrade.
+;;			   coordinate, coordinate of the piece.
+;; Return Value: If the piece can be upgraded, returns upgraded super piece. If not, returns regular piece.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If the piece is white, check if the piece reached the black side of the board. If so, return the super piece of that piece.
+;;             2) If the piece is black, check if the piece reached the white side of the board. If so, return the super piece of that piece.
+;;			   3) If the piece is not eligible to be upgraded to super piece or is already super piece, return the piece.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun checkSuperPiece(boardlength piece coordinate)
-	(cond ((AND (string= (first piece) "W") (= (first coordinate) boardlength))
+	(cond ;; Check if the white piece can be upgraded.
+		  (	(AND (string= (first piece) "W") (= (first coordinate) boardlength))
 			(list (getSuperPieceForPlayerColor (first piece))))
-		  ((AND (string= (first piece) "B") (= (first coordinate) 1))
+	      ;; Check if the black piece can be upgraded.
+		  (	(AND (string= (first piece) "B") (= (first coordinate) 1))
 			(list (getSuperPieceForPlayerColor (first piece))))
+		  ;; Default action to return piece.
 		  (t 
 		  	piece)))
-
-	
-
-;; // List all the relevant functions here
 
 ;; /* *********************************************
 ;; Source Code to ask the human player for input
@@ -769,26 +889,68 @@
 		  (t 
 			(append (list (convertBoardRow (first board))) (fileBoardToGameBoard  (rest board))))))
 
+;; /* ********************************************************************* 
+;; Function Name: convertBoardRowToFile 
+;; Purpose: Convert the board row to a row that is suitable for file serialization.
+;; Parameters: 
+;;             row, row to be converted.
+;; Return Value: Updated row with pieces that match serialization pieces.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If the length of the row is zero, return empty list.
+;;             2) For each first piece of the row, append the appropriate serialized piece. And call function with the rest of the row.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun convertBoardRowToFile (row)
 	(cond ( (= (length row) 0)
 			())
 		  ( (string= (first row) "B")
 			(append (list "B") (convertBoardRowToFile (rest row))))
+			;; Super piece.
 		  ( (string= (first row) "b")
 			(append (list "BB") (convertBoardRowToFile (rest row))))
 		  ( (string= (first row) "W")
 			(append (list "W") (convertBoardRowToFile (rest row))))
+			;; Super piece.
 		  ( (string= (first row) "w")
 			(append (list "WW") (convertBoardRowToFile (rest row))))
+			;; Empty piece.
 		  ( (string= (first row) "+")
 			(append (list "O") (convertBoardRowToFile (rest row))))))
 
+;; /* ********************************************************************* 
+;; Function Name: gameBoardToFileBoard 
+;; Purpose: Convert the board to a bard that is suitable for file serialization.
+;; Parameters: 
+;;             board, board to be converted.
+;; Return Value: Updated board with pieces that match serialization pieces.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If the length of the board is zero, return empty list.
+;;             2) Append output from convertBoardRowToFile using head recursion to current function until there is no more board left.
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun gameBoardToFileBoard (board)
 	(cond ( (= (length board) 0)
 			())
 		  (t 
 			(append (list (convertBoardRowToFile (first board))) (gameBoardToFileBoard  (rest board))))))
 
+;; /* ********************************************************************* 
+;; Function Name: gameColorToFileColor 
+;; Purpose: Convert color piece format in game to one suitable for file serialization.
+;; Parameters: 
+;;             color, color to convert.
+;; Return Value: Color of the piece using serialization format.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If color is "B" return string "Black".
+;;             2) If color is "W" return string "White".
+;; Assistance Received: none 
+;; ********************************************************************* */
 (defun gameColorToFileColor (color)
 	(cond (	(string= color 'b)
 			"BLACK")
