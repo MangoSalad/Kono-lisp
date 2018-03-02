@@ -2332,7 +2332,7 @@
 		;; Coordiantes of piece to capture.
 		(capture (cond ((not (eq shouldCapture nil)) (playCapture board playerColor shouldCapture)) (t ())))
 		;; ;; Coordinates of forward advance.
-		(attack (cond ((OR (eq retreat nil) (eq capture nil)) (playAttack board playerColor listOfPieces)) (t ()))))
+		(attack (cond ((OR (eq shouldRetreat nil) (eq shouldCapture nil)) (playAttack board playerColor listOfPieces)) (t ()))))
 
 		(cond 	
 				;; Check to capture piece.
@@ -2425,7 +2425,7 @@
 		;; Coordinates of piece to capture.
 		(capture (cond ((not (eq shouldCapture nil)) (playCapture board playerColor shouldCapture)) (t ())))
 		;; Coordiantes of piece to move forward.
-		(attack (cond ((OR (eq retreat nil) (eq capture nil)) (playAttack board playerColor listOfPieces)) (t ()))))
+		(attack (cond ((OR (eq shouldRetreat nil) (eq shouldCapture nil)) (playAttack board playerColor listOfPieces)) (t ()))))
 
 			;; Capture piece.
 		(cond (	(AND (not (eq shouldCapture nil)) (not (eq capture nil)))
@@ -2564,7 +2564,7 @@
 		(format t "~A is ~A. ~%" (first players) (first (rest players)))
 		(format t "~A is ~A. ~%" (first (rest (rest players))) (first (rest (rest (rest players)))))
 		;; Play round.
-		(playRound players board 'human (list 'computer 0 'human 0 1))))
+		(playRound players board (first players) (list 'computer 0 'human 0 1))))
 
 ;; /* ********************************************************************* 
 ;; Function Name: newRound 
