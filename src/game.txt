@@ -9,7 +9,7 @@
    Black
 
    ; Human Score:
-   10
+   20
 
    ; Human Color:
    White

@@ -2485,6 +2485,13 @@
 	(cond 	((eq (checkwinner board) t)
 				(let* ((roundScores (getWinner board players)))
 					(tournamentControl roundScores scores))))
+					
+	;; Check if computer will quit. Computer quits if the points spread is >20.
+	(cond (	(>= (abs (- (first (rest (rest (rest scores)))) (first (rest scores)))) 20)
+			(format t "Computer quiting game. Deducting 5 points from computer for quiting. ~%")
+			(announceTournamentScores 'human (first (rest (rest (rest scores)))))
+			(announceTournamentScores 'computer (- (first (rest scores)) 5))
+			(Quit)))
 	
 	;; Display Menu.
 	(let*( 	(choice (readMenu currentTurn))
