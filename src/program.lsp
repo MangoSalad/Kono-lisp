@@ -7,9 +7,9 @@
 
 ;; TO RUN: sbcl --non-interactive --load program.lsp
 
-;; Seed randomness. Only use of a global var. Find better solution later. 
-;; Solution found on internet: https://stackoverflow.com/questions/4034042/random-in-common-lisp-not-so-random
-(setf *random-state* (make-random-state t))
+;; /* *********************************************
+;; Source Code for game logic and utility functions.
+;; ********************************************* */
 
 ;; /* ********************************************************************* 
 ;; Function Name: randomDice 
@@ -18,13 +18,15 @@
 ;;             none.
 ;; Return Value: A number between 2 and 12.
 ;; Local Variables: 
-;;             none.
+;;             randomSeed, stores random state needed to seed randomness.
 ;; Algorithm: 
-;;             1) Use random function to generate random number.
+;;             1) Seed randomness.
+;;			   2) Use random function to generate random number.
 ;; Assistance Received: none 
 ;; ********************************************************************* */
 (defun randomDice ()
-	(+ 2 (random 11)))
+	(let* ( (randomSeed (make-random-state t)))
+			(+ 2 (random 11 randomSeed))))
 
 ;; /* ********************************************************************* 
 ;; Function Name: choosefirstPlayer 
@@ -64,6 +66,7 @@
 ;; Return Value: List holding computer player's color, and human player's color.
 ;; Local Variables: 
 ;;             randomColor, holds atom from random function. This is a random 0 or 1 that chooses the computer player's color.
+;;             randomSeed, stores random state needed to seed randomness.
 ;; Algorithm: 
 ;;             1) Get random 0 or 1.
 ;;			   2) If number is 1, then computer is white. 
@@ -71,7 +74,8 @@
 ;; Assistance Received: none 
 ;; ********************************************************************* */
 (defun computerColor ()
-	(let* ( (randomColor (random 1)) )
+	(let* ( (randomSeed (make-random-state t))
+			(randomColor (random 1 randomSeed)))
 			(cond (	(= randomColor 1)
 					(append (append (list 'w) (list 'human)) (list 'b))	)
 				  (	(= randomColor 0)
@@ -96,8 +100,594 @@
 		  (	(string= (first firstPlayer) 'computer)
 			(append firstPlayer (computerColor )))))
 
+;; /* ********************************************************************* 
+;; Function Name: getPlayerColor 
+;; Purpose: Returns the color of the player.
+;; Parameters: 
+;;			   players, list holding each player and its player color
+;; 			   currentTurn, atom holding player to get color of.
+;; Return Value: Atom that is either W or B for player color.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If the player is the third in the players list, return the fourth item in the players list.
+;;             2) If the player is the first in the players list, return the second item in the players list.
+;; Assistance Received: none 
+;; ********************************************************************* */
+(defun getPlayerColor (players currentTurn)
+	(cond (	(string= currentTurn (first (rest (rest players))) )
+			(first (rest (rest (rest players)))))
+		  (	(string= currentTurn (first players))
+			(first (rest players)))))
+
+;; /* ********************************************************************* 
+;; Function Name: getOppositePlayerColor 
+;; Purpose: Returns the color of the opposite player.
+;; Parameters: 
+;;			   playerColor, color of the player that you want the opposite of.
+;; Return Value: Atom that is either W or B for player color.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If player color is white, return black.
+;;             2) If player color is black, return white.
+;; Assistance Received: none 
+;; ********************************************************************* */
+(defun getOppositePlayerColor (playerColor)
+	(cond (	(string= playerColor 'w) 
+			'b)
+		  (	(string= playerColor 'b)
+			'w)))
+
+;; /* ********************************************************************* 
+;; Function Name: getSuperPieceForPlayerColor 
+;; Purpose: Returns the super piece of a given player color. Returns lower-case letter of player color.
+;; Parameters: 
+;;			   playerColor, color of the player.
+;; Return Value: String holding either "w" or "b" as super piece.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If player color is white, return lower-case white string.
+;;             2) If player color is black, return lower-case black string.
+;; Assistance Received: none 
+;; ********************************************************************* */
+(defun getSuperPieceForPlayerColor (playerColor)
+	(cond (	(string= playerColor "W") 
+			"w")
+		  (	(string= playerColor "B")
+			"b")))
+
+;; /* ********************************************************************* 
+;; Function Name: getNextPlayer 
+;; Purpose: Return the next player that will be playing.
+;; Parameters: 
+;;			   currentTurn, holds who is current player.
+;; Return Value: Name of the player that is next.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If current player is human, return computer.
+;;             2) If current player is computer, return human.
+;; Assistance Received: none 
+;; ********************************************************************* */
+(defun getNextPlayer (currentTurn)
+	(cond (	(string= currentTurn 'human )
+			'computer)
+		  (	(string= currentTurn 'computer)
+			'human)))
+
+;; /* ********************************************************************* 
+;; Function Name: getOpponentColor 
+;; Purpose: Return the color of the opponent.
+;; Parameters: 
+;;			   players, list holding each player and its color.
+;;			   currentTurn, holds who is current player.
+;; Return Value: The color of the opponent player.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If the current player is second in the players list, return the color of the first player.
+;;             2) If the current player is first in the players list, return the color of the second player.
+;; Assistance Received: none 
+;; ********************************************************************* */
+(defun getOpponentColor (players currentTurn)
+	(cond (	(string= currentTurn (first (rest (rest players))) )
+			(first (rest players)))
+		  (	(string= currentTurn (first players))
+			(first (rest (rest (rest players)))))))
+
+;; /* ********************************************************************* 
+;; Function Name: flatten 
+;; Purpose: Remove nested lists in the provided list and concatenates the lists. 
+;; Parameters: 
+;;			   list, the list to unnest.
+;; Return Value: A new list that unnested lists inside.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If the list is empty, return empty list.
+;;			   2) If the first item of the list is an atom, prepend it to the rest of the list.
+;;			   3) Default option is to recursively call function while appending the first of the list to the rest of the list.
+;; Assistance Received: Recieved help from stackoverflow.
+;; 		 https://stackoverflow.com/questions/2680864/how-to-remove-nested-parentheses-in-lisp
+;; ********************************************************************* */
+(defun flatten (list)
+  	(cond ;; If list is empty, return empty list.
+	  	  (	(eq list nil) 
+	  		())
+		  ;; If the first in the list is an atom, add it to the rest of the list.
+		  (	(atom (first list)) 
+		  	(cons (first list) (flatten (rest list))))
+		  ;; Recursively call function.
+		  (t 
+		  	(append (flatten (first list)) (flatten (rest list))))))
+
+;; /* ********************************************************************* 
+;; Function Name: getCountofBlack 
+;; Purpose: Get the number of remaining black pieces left on the board.
+;; Parameters: 
+;;			   board, unnested board list.
+;;			   count, the number of black pieces.
+;; Return Value: The count of the number of black pieces left on the board.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Recursively call getCountofBlack until there is no more board left.
+;;			   2) Check if the first of the board is black, if it is, increment count and call getCountOfBlack with the rest of board.
+;;			   3) Else, Call getCountOfBlack with the rest of board.
+;;			   4) TODO: recursively call function without count parameter.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun getCountofBlack (board count)
+	(cond (	(eq (first board) nil)
+			count)
+		  (	(OR (string= (first board) "B") (string= (first board) "b"))
+			(getCountOfBlack (rest board) (+ count 1)))
+		  (t 
+			(getCountOfBlack (rest board) count))))
+
+;; /* ********************************************************************* 
+;; Function Name: getCountofWhite 
+;; Purpose: Get the number of remaining white pieces left on the board.
+;; Parameters: 
+;;			   board, unnested board list.
+;;			   count, the number of white pieces.
+;; Return Value: The count of the number of white pieces left on the board.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Recursively call getCountofWhite until there is no more board left.
+;;			   2) Check if the first of the board is white, if it is, increment count and call getCountofWhite with the rest of board.
+;;			   3) Else, Call getCountofWhite with the rest of board.
+;;			   4) TODO: recursively call function without count parameter.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun getCountofWhite (board count)
+	(cond (	(eq (first board) nil)
+			count)
+		  (	(OR (string= (first board) "W") (string= (first board) "w"))
+			(getCountofWhite (rest board) (+ count 1)))
+		  (t 
+			(getCountofWhite (rest board) count))))
+
+;; /* ********************************************************************* 
+;; Function Name: getWhiteSide 
+;; Purpose: Gets the number of remaining black pieces that have yet to capture the white side.
+;; Parameters: 
+;;			   board, unnested board list.
+;;			   boardlength, the length of the board.
+;;			   numBlack, the number of black pieces that have not captured the white side.
+;;			   index, index number used for looping through unnested board.
+;; Return Value: The count of black pieces that have not captured the white side.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If the board is empty, return the number of black pieces left outside of white side.
+;;			   2) If the home piece has a black piece on it, then decrement the number of black pieces.
+;;			   3) Recursively call this function until the entire white home side has been accounted for.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun getWhiteSide (board boardlength numBlack index)
+	(cond (	(eq (first board) nil)
+			numBlack)
+			;; Checking columns in row one for black piece.
+		  (	(AND (<= index (+ boardlength 1)) (OR (string= (first board) "B") (string= (first board) "b")))
+			(getWhiteSide (rest board) boardlength (- numBlack 1) (+ index 1)))
+		  	;; Checking columns in row two for black piece.
+		  (	(AND (= index (* boardlength 2)) (OR (string= (first board) "B") (string= (first board) "b")))
+			(getWhiteSide (rest board) boardlength (- numBlack 1) (+ index 1)))
+		  (t 
+			(getWhiteSide (rest board) boardlength numBlack (+ index 1)))))
+
+;; /* ********************************************************************* 
+;; Function Name: getBlackSide 
+;; Purpose: Gets the number of remaining white pieces that have yet to capture the black side.
+;; Parameters: 
+;;			   board, unnested board list.
+;;			   boardlength, the length of the board.
+;;			   numWhite, the number of white pieces that have not captured the white side.
+;;			   index, index number used for looping through unnested board.
+;; Return Value: The count of white pieces that have not captured the black side.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) If the board is empty, return the number of white pieces left outside of black side.
+;;			   2) If the home piece has a white piece on it, then decrement the number of white pieces.
+;;			   3) Recursively call this function until the entire black home side has been accounted for.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun getBlackSide (board boardlength numWhite index)
+	(cond (	(eq (first board) nil)
+			numWhite)
+			;; Check last row for white pieces.
+		  (	(AND (>= index (* boardlength (- boardlength 1))) (OR (string= (first board) "W") (string= (first board) "w")))
+			(getBlackSide (rest board) boardlength (- numWhite 1) (+ index 1)))
+			;; Check second to last row for white pieces.
+		  (	(AND (= index (* boardlength (- boardlength 2))) (OR (string= (first board) "W") (string= (first board) "w")))
+			(getBlackSide (rest board) boardlength (- numWhite 1) (+ index 1)))
+		  (	(AND (= index (+ (* boardlength (- boardlength 2)) 1)) (OR (string= (first board) "W") (string= (first board) "w")))
+			(getBlackSide (rest board) boardlength (- numWhite 1) (+ index 1)))
+		  (t 
+			(getBlackSide (rest board) boardlength numWhite (+ index 1)))))
+
+;; /* ********************************************************************* 
+;; Function Name: checkwinner 
+;; Purpose: Returns t if a winning condition has been met, else returns empty list.
+;; Parameters: 
+;;			   board, game board.
+;; Return Value: T or nil if game condition has been met.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Check if the white side has been captured by black pieces.
+;;			   2) Check if the black side has been captured by white pieces.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun checkwinner(board)
+	(cond (	(= (getWhiteSide (flatten board) (length board) (getCountofBlack (flatten board) 0) 1) 0)
+			t)
+		  (	(= (getBlackSide (flatten board) (length board) (getCountofWhite (flatten board) 0) 1) 0)
+			t)
+		  (t
+			())))
+
+;; /* ********************************************************************* 
+;; Function Name: countBlackScore 
+;; Purpose: Counts the score for the black player.
+;; Parameters: 
+;;			   board, unnested game board.
+;;			   boardlength, length of the board.
+;;			   score, current score
+;;			   index, used to traverse board.
+;; Return Value: Score which is sum of the total points captured.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Using an unnested game board piece. Check if the index has a black piece on it.
+;;			   2) Depending on the index, add points to the score.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun countBlackScore (board boardlength score index)
+	(cond 	((eq (first board) nil)
+			score)
+			((AND (= index 1) (OR (string= (first board) "B") (string= (first board) "b")))
+				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
+			((AND (= index 2) (OR (string= (first board) "B") (string= (first board) "b")))
+				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (= index 3) (OR (string= (first board) "B") (string= (first board) "b")))
+				(countBlackScore (rest board) boardlength (+ score 5) (+ index 1)))
+			;; board size is 5
+			((AND (AND (= index 4) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 5))
+				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (AND (= index 5) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 5))
+				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
+			;; board size is 7
+			((AND (AND (= index 4) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 7))
+				(countBlackScore (rest board) boardlength (+ score 7) (+ index 1)))
+			((AND (AND (= index 5) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 7))
+				(countBlackScore (rest board) boardlength (+ score 5) (+ index 1)))
+			((AND (AND (= index 6) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 7))
+				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (AND (= index 7) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 7))
+				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
+			;; board size is 9
+			((AND (AND (= index 4) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
+				(countBlackScore (rest board) boardlength (+ score 7) (+ index 1)))
+			((AND (AND (= index 5) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
+				(countBlackScore (rest board) boardlength (+ score 9) (+ index 1)))
+			((AND (AND (= index 6) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
+				(countBlackScore (rest board) boardlength (+ score 7) (+ index 1)))
+			((AND (AND (= index 7) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
+				(countBlackScore (rest board) boardlength (+ score 5) (+ index 1)))
+			((AND (AND (= index 8) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
+				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (AND (= index 9) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
+				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
+			;; row 2
+			((AND (= index (+ boardlength 1)) (OR (string= (first board) "B") (string= (first board) "b")))
+				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (= index (* boardlength 2)) (OR (string= (first board) "B") (string= (first board) "b")))
+				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
+			(t 
+			(countBlackScore (rest board) boardlength score (+ index 1)))))
+
+;; /* ********************************************************************* 
+;; Function Name: countWhiteScore 
+;; Purpose: Counts the score for the white player.
+;; Parameters: 
+;;			   board, unnested game board.
+;;			   boardlength, length of the board.
+;;			   score, current score
+;;			   index, used to traverse board.
+;; Return Value: Score which is sum of the total points captured.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Using an unnested game board piece. Check if the index has a white piece on it.
+;;			   2) Depending on the index, add points to the score.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun countWhiteScore (board boardlength score index)
+	(cond 	((eq (first board) nil)
+			score)
+			((AND (= index (+ (* boardlength (- boardlength 1)) 1)) (OR (string= (first board) "W") (string= (first board) "w")))
+				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
+			((AND (= index (+ (* boardlength (- boardlength 1)) 2)) (OR (string= (first board) "W") (string= (first board) "w")))
+				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (= index (+ (* boardlength (- boardlength 1)) 3)) (OR (string= (first board) "W") (string= (first board) "w")))
+				(countWhiteScore (rest board) boardlength (+ score 5) (+ index 1)))
+			;; board size is 5
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 5))
+				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 5)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 5))
+				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
+			;; board size is 7
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 7))
+				(countWhiteScore (rest board) boardlength (+ score 7) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 5)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 7))
+				(countWhiteScore (rest board) boardlength (+ score 5) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 6)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 7))
+				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 7)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 7))
+				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
+			;; board size is 9
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
+				(countWhiteScore (rest board) boardlength (+ score 7) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 5)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
+				(countWhiteScore (rest board) boardlength (+ score 9) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 6)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
+				(countWhiteScore (rest board) boardlength (+ score 7) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 7)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
+				(countWhiteScore (rest board) boardlength (+ score 5) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 8)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
+				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 9)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
+				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
+			;; row 2
+			((AND (= index (* boardlength (- boardlength 1))) (OR (string= (first board) "W") (string= (first board) "w")))
+				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
+			((AND (= index (+ (* boardlength (- boardlength 2)) 1)) (OR (string= (first board) "W") (string= (first board) "w")))
+				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
+			(t 
+			(countWhiteScore (rest board) boardlength score (+ index 1)))))
+
+;; /* ********************************************************************* 
+;; Function Name: calculateScores 
+;; Purpose: Calculates scores for computer and human players.
+;; Parameters: 
+;;			   board, game board.
+;;			   boardlength, length of the board.
+;; Return Value: Returns list containing score for white and black players.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Get scores for white player.
+;;			   2) Get scores for black player.
+;;			   3) Put scores into list and return the list.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun calculateScores (board boardlength)
+	;; Return white score and black score in that order.
+	(list (+ (countWhiteScore board boardlength 0 1) (* (- (+ boardlength 2) (getCountOfBlack board 0)) 5))
+	(+ (countBlackScore board boardlength 0 1) (* (- (+ boardlength 2) (getCountofWhite board 0)) 5))))
+
+;; /* ********************************************************************* 
+;; Function Name: announceScores 
+;; Purpose: Outputs player score.
+;; Parameters: 
+;;			   player, player name - either computer or human.
+;;			   score, player's score.
+;; Return Value: None.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Output player and score.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun announceScores (player score)
+	(format t "~A scored ~S points. ~%" player score))
+
+;; /* ********************************************************************* 
+;; Function Name: calculateWinner 
+;; Purpose: Calculates the winner for the current game round.
+;; Parameters: 
+;;			   playerOne, first player.
+;;			   scoreOne, player one's score.
+;;			   playerTwo, second player.
+;;			   scoreTwo, player two's score.
+;; Return Value: List containing winner and difference of scores to be awarded.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Check if scoreOne is greater than scoreTwo. If so, then output that the playerOne is winner.
+;;             2) Check if scoreOne is less than scoreTwo. If so, then output that the playerTwo is winner.
+;;			   3) If it is a tie, output that it is a tie.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun calculateWinner (playerOne scoreOne playerTwo scoreTwo)
+	(cond (	(> scoreOne scoreTwo)
+			(format t "~A won and is awarded ~S points ~%" playerOne (- scoreOne scoreTwo))
+			(list playerOne (- scoreOne scoreTwo)))
+		  (	(< scoreOne scoreTwo)
+			(format t "~A won and is awarded ~S points ~%" playerTwo (- scoreTwo scoreOne))
+			(list playerTwo (- scoreTwo scoreOne)))
+		  (	(= scoreOne scoreTwo)
+			(format t "There is no clear winner. It is a draw. ~%")
+			(list playerOne 0))))
+
+;; /* ********************************************************************* 
+;; Function Name: getWinner 
+;; Purpose: Announces scores for the current round and calls function to calculate Winner.
+;; Parameters: 
+;;			   board, game board.
+;;			   players, players list holding players and player colors.
+;; Return Value: List containing winner and difference of scores to be awarded.
+;; Local Variables: 
+;;             scores, list that has total points for each player for the round.
+;; Algorithm: 
+;;             1) Announce first player's points.
+;;             2) Announce second player's points.
+;;			   3) Announce winner.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun getWinner(board players)
+	;; scores for the game.
+	(let* ( (scores (calculateScores (flatten board) (length board))))
+		;; if first player is white, announce the white score
+		(cond (	(string= (first (rest players)) "W")
+				(announceScores (first players) (first scores))
+				(announceScores (first (rest (rest players))) (first (rest scores)))
+				(calculateWinner (first players) (first scores) (first (rest (rest players))) (first (rest scores))))
+				;; if first player is black, announce the black score
+			  ( (string= (first (rest players)) "B")
+				(announceScores (first players) (first (rest scores)))
+				(announceScores (first (rest (rest players))) (first scores))
+				(calculateWinner (first players) (first (rest scores)) (first (rest (rest players))) (first scores))))))
+
+;; /* ********************************************************************* 
+;; Function Name: announceTournamentScores 
+;; Purpose: Announces tournament scores.
+;; Parameters: 
+;;			   player, player to be announced.
+;;			   score, player's score.
+;; Return Value: None.
+;; Local Variables: 
+;;             None.
+;; Algorithm: 
+;;             1) Announce player's tournament score.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun announceTournamentScores (player score)
+	(format t "~A has ~S points. ~%" player score))
+
+;; /* ********************************************************************* 
+;; Function Name: tournamentControl 
+;; Purpose: Main tournament control logc. Calls functions to announce scores and asks user to play again.
+;; Parameters: 
+;;			   prevWinner, previous winner of the tournament.
+;;			   scores, scores list that has tournament score for each player.
+;; Return Value: None.
+;; Local Variables: 
+;;             tournamentScore, list hold tournament scores for each player.
+;;			   playAgain, choice for human to play round again.
+;; Algorithm: 
+;;             1) Announce player's tournament score.
+;;			   2) Ask human if they want to play again. Record answer to local variable.
+;;			   3) Previous winner plays first.
+;; Assistance Received: None.
+;; ********************************************************************* */
+(defun tournamentControl (prevWinner scores)
+	;; Get tournament scores.
+	(let* ( (tournamentScore (calculateTournamentScore prevWinner scores)))
+		;; Announce tournament scores.
+		(format t "Tournament Scores: ~%")
+		(announceTournamentScores (first tournamentScore) (first (rest tournamentScore)))
+		(announceTournamentScores (first (rest (rest tournamentScore))) (first (rest (rest (rest tournamentScore)))))
+		;; Ask user to play again.
+		(let* ( (playAgain (readPlayAgain)))
+			(cond (	(string= playAgain "Y")
+					;; Previous winner plays first.
+					(newRound tournamentScore (first prevWinner)))
+				  (	(string= playAgain "N")
+				  	;; Quit game.
+					(Quit))))))
+	
+;; /* ********************************************************************* 
+;; Function Name: calculateTournamentScore 
+;; Purpose: Calculates tournament score by adding round score to the tournament score.
+;; Parameters: 
+;;			   roundScores, round scores.
+;;			   tournamentScores, tournament scores.
+;; Return Value: Returns new scores list containing the awarded difference in points to the tournament scores.
+;; Local Variables: 
+;;			   None.
+;; Algorithm: 
+;;             1) If first player is computer, return new list object given that the first player is computer.
+;;             2) If first player is human, return new list object given that the first player is human.
+;;			   3) I unfortunately did not standardize the scores list, therefore I have to always check to see who the first player is and adjust accordingly.
+;; Assistance Received: None.
+;; ********************************************************************* */	
+(defun calculateTournamentScore (roundScores tournamentScores)
+	(cond (	(string= (first roundScores) "COMPUTER")
+			(list 'computer (+ (first (rest tournamentScores)) (first (rest roundScores))) 'human (first (rest (rest (rest tournamentScores)))) (+ 1 (first (rest (rest (rest (rest tournamentScores))))))))
+		  (	(string= (first roundScores) "HUMAN")
+			(list 'computer (first (rest tournamentScores)) 'human (+ (first (rest (rest (rest tournamentScores)))) (first (rest roundScores))) (+ 1 (first (rest (rest (rest (rest tournamentScores))))))))))
+
+;; /* ********************************************************************* 
+;; Function Name: playHuman 
+;; Purpose: Logic for human player.
+;; Parameters: 
+;;			   players, list of players.
+;;			   board, game board.
+;;			   scores, current tournament scores.
+;;			   playerColor, human player color.
+;; Return Value: None.
+;; Local Variables: 
+;;			   coordinates, row and column positions of human player piece.
+;; Algorithm: 
+;;             1) Ask for player coordinates.
+;;			   2) Ask for direction to move.
+;;			   4) Validate coordinates and final coordinates.
+;;			   5) Update board if valid, else ask again.
+;; Assistance Received: None.
+;; ********************************************************************* */	
+(defun playHuman (players board scores playerColor)
+	(let*( (coordinates (append (readHumanRow) (readHumanColumn) ))
+		;; get final coordinates
+		(finalCoordinates (readHumanDirection coordinates))
+		;; checks if the piece at coordinates is equal to the player color
+		(isValidPiece (validPieceToMove board coordinates))
+		;; checks if the piece at new coordinates is "+"
+		(isValidDirection (validDirectionToMove board finalCoordinates)))
+		(cond (	(AND (OR (string= isValidPiece playerColor) (string= isValidPiece (getSuperPieceForPlayerColor playerColor))) (OR (string= isValidDirection (getSuperPieceForPlayerColor (getOppositePlayerColor playerColor))) (OR (string= isValidDirection "+") (string= isValidDirection (getOppositePlayerColor playerColor)))))
+				(playRound players (updateBoard board coordinates finalCoordinates (list isValidPiece)) 'computer scores))
+			  (t
+				(princ "Not a valid move. Try again.") 
+				(playRound players board 'human scores)))))
+
+;; /* ********************************************************************* 
+;; Function Name: rev 
+;; Purpose: Reverses a list.
+;; Parameters: 
+;;			   list, a list to reverse.
+;; Return Value: None.
+;; Local Variables: 
+;;			   None.
+;; Algorithm: 
+;;             1) If list is null, return empty list.
+;;			   2) Recursively append the rest of the list to the first of the list.
+;; Assistance Received: Recieved help on stackoverflow.
+;;	https://stackoverflow.com/questions/34422711/reversing-list-in-lisp
+;; ********************************************************************* */	
+(defun rev (list)
+	(cond (	(null list) 
+			())
+		  (t 
+		  	(append (rev (rest list)) (list (first list))))))
+
 ;; /* *********************************************
-;; Source Code to draw the game board on the screen
+;; Source Code for board model and display.
 ;; ********************************************* */
 
 ;; /* ********************************************************************* 
@@ -1055,600 +1645,13 @@
 								(list nextPlayer))
 									(list 'computer computerScore 'human humanScore roundNum)))))
 
-;; /* ********************************************************************* 
-;; Function Name: getPlayerColor 
-;; Purpose: Returns the color of the player.
-;; Parameters: 
-;;			   players, list holding each player and its player color
-;; 			   currentTurn, atom holding player to get color of.
-;; Return Value: Atom that is either W or B for player color.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) If the player is the third in the players list, return the fourth item in the players list.
-;;             2) If the player is the first in the players list, return the second item in the players list.
-;; Assistance Received: none 
-;; ********************************************************************* */
-(defun getPlayerColor (players currentTurn)
-	(cond (	(string= currentTurn (first (rest (rest players))) )
-			(first (rest (rest (rest players)))))
-		  (	(string= currentTurn (first players))
-			(first (rest players)))))
-
-;; /* ********************************************************************* 
-;; Function Name: getOppositePlayerColor 
-;; Purpose: Returns the color of the opposite player.
-;; Parameters: 
-;;			   playerColor, color of the player that you want the opposite of.
-;; Return Value: Atom that is either W or B for player color.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) If player color is white, return black.
-;;             2) If player color is black, return white.
-;; Assistance Received: none 
-;; ********************************************************************* */
-(defun getOppositePlayerColor (playerColor)
-	(cond (	(string= playerColor 'w) 
-			'b)
-		  (	(string= playerColor 'b)
-			'w)))
-
-;; /* ********************************************************************* 
-;; Function Name: getSuperPieceForPlayerColor 
-;; Purpose: Returns the super piece of a given player color. Returns lower-case letter of player color.
-;; Parameters: 
-;;			   playerColor, color of the player.
-;; Return Value: String holding either "w" or "b" as super piece.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) If player color is white, return lower-case white string.
-;;             2) If player color is black, return lower-case black string.
-;; Assistance Received: none 
-;; ********************************************************************* */
-(defun getSuperPieceForPlayerColor (playerColor)
-	(cond (	(string= playerColor "W") 
-			"w")
-		  (	(string= playerColor "B")
-			"b")))
-
-;; /* ********************************************************************* 
-;; Function Name: getNextPlayer 
-;; Purpose: Return the next player that will be playing.
-;; Parameters: 
-;;			   currentTurn, holds who is current player.
-;; Return Value: Name of the player that is next.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) If current player is human, return computer.
-;;             2) If current player is computer, return human.
-;; Assistance Received: none 
-;; ********************************************************************* */
-(defun getNextPlayer (currentTurn)
-	(cond (	(string= currentTurn 'human )
-			'computer)
-		  (	(string= currentTurn 'computer)
-			'human)))
-
-;; /* ********************************************************************* 
-;; Function Name: getOpponentColor 
-;; Purpose: Return the color of the opponent.
-;; Parameters: 
-;;			   players, list holding each player and its color.
-;;			   currentTurn, holds who is current player.
-;; Return Value: The color of the opponent player.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) If the current player is second in the players list, return the color of the first player.
-;;             2) If the current player is first in the players list, return the color of the second player.
-;; Assistance Received: none 
-;; ********************************************************************* */
-(defun getOpponentColor (players currentTurn)
-	(cond (	(string= currentTurn (first (rest (rest players))) )
-			(first (rest players)))
-		  (	(string= currentTurn (first players))
-			(first (rest (rest (rest players)))))))
-
-;; /* ********************************************************************* 
-;; Function Name: flatten 
-;; Purpose: Remove nested lists in the provided list and concatenates the lists. 
-;; Parameters: 
-;;			   list, the list to unnest.
-;; Return Value: A new list that unnested lists inside.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) If the list is empty, return empty list.
-;;			   2) If the first item of the list is an atom, prepend it to the rest of the list.
-;;			   3) Default option is to recursively call function while appending the first of the list to the rest of the list.
-;; Assistance Received: Recieved help from stackoverflow.
-;; 		 https://stackoverflow.com/questions/2680864/how-to-remove-nested-parentheses-in-lisp
-;; ********************************************************************* */
-(defun flatten (list)
-  	(cond ;; If list is empty, return empty list.
-	  	  (	(eq list nil) 
-	  		())
-		  ;; If the first in the list is an atom, add it to the rest of the list.
-		  (	(atom (first list)) 
-		  	(cons (first list) (flatten (rest list))))
-		  ;; Recursively call function.
-		  (t 
-		  	(append (flatten (first list)) (flatten (rest list))))))
-
-;; /* ********************************************************************* 
-;; Function Name: getCountofBlack 
-;; Purpose: Get the number of remaining black pieces left on the board.
-;; Parameters: 
-;;			   board, unnested board list.
-;;			   count, the number of black pieces.
-;; Return Value: The count of the number of black pieces left on the board.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) Recursively call getCountofBlack until there is no more board left.
-;;			   2) Check if the first of the board is black, if it is, increment count and call getCountOfBlack with the rest of board.
-;;			   3) Else, Call getCountOfBlack with the rest of board.
-;;			   4) TODO: recursively call function without count parameter.
-;; Assistance Received: None.
-;; ********************************************************************* */
-(defun getCountofBlack (board count)
-	(cond (	(eq (first board) nil)
-			count)
-		  (	(OR (string= (first board) "B") (string= (first board) "b"))
-			(getCountOfBlack (rest board) (+ count 1)))
-		  (t 
-			(getCountOfBlack (rest board) count))))
-
-;; /* ********************************************************************* 
-;; Function Name: getCountofWhite 
-;; Purpose: Get the number of remaining white pieces left on the board.
-;; Parameters: 
-;;			   board, unnested board list.
-;;			   count, the number of white pieces.
-;; Return Value: The count of the number of white pieces left on the board.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) Recursively call getCountofWhite until there is no more board left.
-;;			   2) Check if the first of the board is white, if it is, increment count and call getCountofWhite with the rest of board.
-;;			   3) Else, Call getCountofWhite with the rest of board.
-;;			   4) TODO: recursively call function without count parameter.
-;; Assistance Received: None.
-;; ********************************************************************* */
-(defun getCountofWhite (board count)
-	(cond (	(eq (first board) nil)
-			count)
-		  (	(OR (string= (first board) "W") (string= (first board) "w"))
-			(getCountofWhite (rest board) (+ count 1)))
-		  (t 
-			(getCountofWhite (rest board) count))))
-
-;; /* ********************************************************************* 
-;; Function Name: getWhiteSide 
-;; Purpose: Gets the number of remaining black pieces that have yet to capture the white side.
-;; Parameters: 
-;;			   board, unnested board list.
-;;			   boardlength, the length of the board.
-;;			   numBlack, the number of black pieces that have not captured the white side.
-;;			   index, index number used for looping through unnested board.
-;; Return Value: The count of black pieces that have not captured the white side.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) If the board is empty, return the number of black pieces left outside of white side.
-;;			   2) If the home piece has a black piece on it, then decrement the number of black pieces.
-;;			   3) Recursively call this function until the entire white home side has been accounted for.
-;; Assistance Received: None.
-;; ********************************************************************* */
-(defun getWhiteSide (board boardlength numBlack index)
-	(cond (	(eq (first board) nil)
-			numBlack)
-			;; Checking columns in row one for black piece.
-		  (	(AND (<= index (+ boardlength 1)) (OR (string= (first board) "B") (string= (first board) "b")))
-			(getWhiteSide (rest board) boardlength (- numBlack 1) (+ index 1)))
-		  	;; Checking columns in row two for black piece.
-		  (	(AND (= index (* boardlength 2)) (OR (string= (first board) "B") (string= (first board) "b")))
-			(getWhiteSide (rest board) boardlength (- numBlack 1) (+ index 1)))
-		  (t 
-			(getWhiteSide (rest board) boardlength numBlack (+ index 1)))))
-
-;; /* ********************************************************************* 
-;; Function Name: getBlackSide 
-;; Purpose: Gets the number of remaining white pieces that have yet to capture the black side.
-;; Parameters: 
-;;			   board, unnested board list.
-;;			   boardlength, the length of the board.
-;;			   numWhite, the number of white pieces that have not captured the white side.
-;;			   index, index number used for looping through unnested board.
-;; Return Value: The count of white pieces that have not captured the black side.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) If the board is empty, return the number of white pieces left outside of black side.
-;;			   2) If the home piece has a white piece on it, then decrement the number of white pieces.
-;;			   3) Recursively call this function until the entire black home side has been accounted for.
-;; Assistance Received: None.
-;; ********************************************************************* */
-(defun getBlackSide (board boardlength numWhite index)
-	(cond (	(eq (first board) nil)
-			numWhite)
-			;; Check last row for white pieces.
-		  (	(AND (>= index (* boardlength (- boardlength 1))) (OR (string= (first board) "W") (string= (first board) "w")))
-			(getBlackSide (rest board) boardlength (- numWhite 1) (+ index 1)))
-			;; Check second to last row for white pieces.
-		  (	(AND (= index (* boardlength (- boardlength 2))) (OR (string= (first board) "W") (string= (first board) "w")))
-			(getBlackSide (rest board) boardlength (- numWhite 1) (+ index 1)))
-		  (	(AND (= index (+ (* boardlength (- boardlength 2)) 1)) (OR (string= (first board) "W") (string= (first board) "w")))
-			(getBlackSide (rest board) boardlength (- numWhite 1) (+ index 1)))
-		  (t 
-			(getBlackSide (rest board) boardlength numWhite (+ index 1)))))
-
-;; /* ********************************************************************* 
-;; Function Name: checkwinner 
-;; Purpose: Returns t if a winning condition has been met, else returns empty list.
-;; Parameters: 
-;;			   board, game board.
-;; Return Value: T or nil if game condition has been met.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) Check if the white side has been captured by black pieces.
-;;			   2) Check if the black side has been captured by white pieces.
-;; Assistance Received: None.
-;; ********************************************************************* */
-(defun checkwinner(board)
-	(cond (	(= (getWhiteSide (flatten board) (length board) (getCountofBlack (flatten board) 0) 1) 0)
-			t)
-		  (	(= (getBlackSide (flatten board) (length board) (getCountofWhite (flatten board) 0) 1) 0)
-			t)
-		  (t
-			())))
-
-;; /* ********************************************************************* 
-;; Function Name: countBlackScore 
-;; Purpose: Counts the score for the black player.
-;; Parameters: 
-;;			   board, unnested game board.
-;;			   boardlength, length of the board.
-;;			   score, current score
-;;			   index, used to traverse board.
-;; Return Value: Score which is sum of the total points captured.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) Using an unnested game board piece. Check if the index has a black piece on it.
-;;			   2) Depending on the index, add points to the score.
-;; Assistance Received: None.
-;; ********************************************************************* */
-(defun countBlackScore (board boardlength score index)
-	(cond 	((eq (first board) nil)
-			score)
-			((AND (= index 1) (OR (string= (first board) "B") (string= (first board) "b")))
-				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
-			((AND (= index 2) (OR (string= (first board) "B") (string= (first board) "b")))
-				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (= index 3) (OR (string= (first board) "B") (string= (first board) "b")))
-				(countBlackScore (rest board) boardlength (+ score 5) (+ index 1)))
-			;; board size is 5
-			((AND (AND (= index 4) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 5))
-				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (AND (= index 5) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 5))
-				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
-			;; board size is 7
-			((AND (AND (= index 4) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 7))
-				(countBlackScore (rest board) boardlength (+ score 7) (+ index 1)))
-			((AND (AND (= index 5) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 7))
-				(countBlackScore (rest board) boardlength (+ score 5) (+ index 1)))
-			((AND (AND (= index 6) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 7))
-				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (AND (= index 7) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 7))
-				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
-			;; board size is 9
-			((AND (AND (= index 4) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
-				(countBlackScore (rest board) boardlength (+ score 7) (+ index 1)))
-			((AND (AND (= index 5) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
-				(countBlackScore (rest board) boardlength (+ score 9) (+ index 1)))
-			((AND (AND (= index 6) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
-				(countBlackScore (rest board) boardlength (+ score 7) (+ index 1)))
-			((AND (AND (= index 7) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
-				(countBlackScore (rest board) boardlength (+ score 5) (+ index 1)))
-			((AND (AND (= index 8) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
-				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (AND (= index 9) (OR (string= (first board) "B") (string= (first board) "b"))) (= boardlength 9))
-				(countBlackScore (rest board) boardlength (+ score 3) (+ index 1)))
-			;; row 2
-			((AND (= index (+ boardlength 1)) (OR (string= (first board) "B") (string= (first board) "b")))
-				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (= index (* boardlength 2)) (OR (string= (first board) "B") (string= (first board) "b")))
-				(countBlackScore (rest board) boardlength (+ score 1) (+ index 1)))
-			(t 
-			(countBlackScore (rest board) boardlength score (+ index 1)))))
-
-;; /* ********************************************************************* 
-;; Function Name: countWhiteScore 
-;; Purpose: Counts the score for the white player.
-;; Parameters: 
-;;			   board, unnested game board.
-;;			   boardlength, length of the board.
-;;			   score, current score
-;;			   index, used to traverse board.
-;; Return Value: Score which is sum of the total points captured.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) Using an unnested game board piece. Check if the index has a white piece on it.
-;;			   2) Depending on the index, add points to the score.
-;; Assistance Received: None.
-;; ********************************************************************* */
-(defun countWhiteScore (board boardlength score index)
-	(cond 	((eq (first board) nil)
-			score)
-			((AND (= index (+ (* boardlength (- boardlength 1)) 1)) (OR (string= (first board) "W") (string= (first board) "w")))
-				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
-			((AND (= index (+ (* boardlength (- boardlength 1)) 2)) (OR (string= (first board) "W") (string= (first board) "w")))
-				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (= index (+ (* boardlength (- boardlength 1)) 3)) (OR (string= (first board) "W") (string= (first board) "w")))
-				(countWhiteScore (rest board) boardlength (+ score 5) (+ index 1)))
-			;; board size is 5
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 5))
-				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 5)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 5))
-				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
-			;; board size is 7
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 7))
-				(countWhiteScore (rest board) boardlength (+ score 7) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 5)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 7))
-				(countWhiteScore (rest board) boardlength (+ score 5) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 6)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 7))
-				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 7)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 7))
-				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
-			;; board size is 9
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 4)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
-				(countWhiteScore (rest board) boardlength (+ score 7) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 5)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
-				(countWhiteScore (rest board) boardlength (+ score 9) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 6)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
-				(countWhiteScore (rest board) boardlength (+ score 7) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 7)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
-				(countWhiteScore (rest board) boardlength (+ score 5) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 8)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
-				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (AND (= index (+ (* boardlength (- boardlength 1)) 9)) (OR (string= (first board) "W") (string= (first board) "w"))) (= boardlength 9))
-				(countWhiteScore (rest board) boardlength (+ score 3) (+ index 1)))
-			;; row 2
-			((AND (= index (* boardlength (- boardlength 1))) (OR (string= (first board) "W") (string= (first board) "w")))
-				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
-			((AND (= index (+ (* boardlength (- boardlength 2)) 1)) (OR (string= (first board) "W") (string= (first board) "w")))
-				(countWhiteScore (rest board) boardlength (+ score 1) (+ index 1)))
-			(t 
-			(countWhiteScore (rest board) boardlength score (+ index 1)))))
-
-;; /* ********************************************************************* 
-;; Function Name: calculateScores 
-;; Purpose: Calculates scores for computer and human players.
-;; Parameters: 
-;;			   board, game board.
-;;			   boardlength, length of the board.
-;; Return Value: Returns list containing score for white and black players.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) Get scores for white player.
-;;			   2) Get scores for black player.
-;;			   3) Put scores into list and return the list.
-;; Assistance Received: None.
-;; ********************************************************************* */
-(defun calculateScores (board boardlength)
-	;; Return white score and black score in that order.
-	(list (+ (countWhiteScore board boardlength 0 1) (* (- (+ boardlength 2) (getCountOfBlack board 0)) 5))
-	(+ (countBlackScore board boardlength 0 1) (* (- (+ boardlength 2) (getCountofWhite board 0)) 5))))
-
-;; /* ********************************************************************* 
-;; Function Name: announceScores 
-;; Purpose: Outputs player score.
-;; Parameters: 
-;;			   player, player name - either computer or human.
-;;			   score, player's score.
-;; Return Value: None.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) Output player and score.
-;; Assistance Received: None.
-;; ********************************************************************* */
-(defun announceScores (player score)
-	(format t "~A scored ~S points. ~%" player score))
-
-;; /* ********************************************************************* 
-;; Function Name: calculateWinner 
-;; Purpose: Calculates the winner for the current game round.
-;; Parameters: 
-;;			   playerOne, first player.
-;;			   scoreOne, player one's score.
-;;			   playerTwo, second player.
-;;			   scoreTwo, player two's score.
-;; Return Value: List containing winner and difference of scores to be awarded.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) Check if scoreOne is greater than scoreTwo. If so, then output that the playerOne is winner.
-;;             2) Check if scoreOne is less than scoreTwo. If so, then output that the playerTwo is winner.
-;;			   3) If it is a tie, output that it is a tie.
-;; Assistance Received: None.
-;; ********************************************************************* */
-(defun calculateWinner (playerOne scoreOne playerTwo scoreTwo)
-	(cond (	(> scoreOne scoreTwo)
-			(format t "~A won and is awarded ~S points ~%" playerOne (- scoreOne scoreTwo))
-			(list playerOne (- scoreOne scoreTwo)))
-		  (	(< scoreOne scoreTwo)
-			(format t "~A won and is awarded ~S points ~%" playerTwo (- scoreTwo scoreOne))
-			(list playerTwo (- scoreTwo scoreOne)))
-		  (	(= scoreOne scoreTwo)
-			(format t "There is no clear winner. It is a draw. ~%")
-			(list playerOne 0))))
-
-;; /* ********************************************************************* 
-;; Function Name: getWinner 
-;; Purpose: Announces scores for the current round and calls function to calculate Winner.
-;; Parameters: 
-;;			   board, game board.
-;;			   players, players list holding players and player colors.
-;; Return Value: List containing winner and difference of scores to be awarded.
-;; Local Variables: 
-;;             scores, list that has total points for each player for the round.
-;; Algorithm: 
-;;             1) Announce first player's points.
-;;             2) Announce second player's points.
-;;			   3) Announce winner.
-;; Assistance Received: None.
-;; ********************************************************************* */
-(defun getWinner(board players)
-	;; scores for the game.
-	(let* ( (scores (calculateScores (flatten board) (length board))))
-		;; if first player is white, announce the white score
-		(cond (	(string= (first (rest players)) "W")
-				(announceScores (first players) (first scores))
-				(announceScores (first (rest (rest players))) (first (rest scores)))
-				(calculateWinner (first players) (first scores) (first (rest (rest players))) (first (rest scores))))
-				;; if first player is black, announce the black score
-			  ( (string= (first (rest players)) "B")
-				(announceScores (first players) (first (rest scores)))
-				(announceScores (first (rest (rest players))) (first scores))
-				(calculateWinner (first players) (first (rest scores)) (first (rest (rest players))) (first scores))))))
-
-;; /* ********************************************************************* 
-;; Function Name: announceTournamentScores 
-;; Purpose: Announces tournament scores.
-;; Parameters: 
-;;			   player, player to be announced.
-;;			   score, player's score.
-;; Return Value: None.
-;; Local Variables: 
-;;             None.
-;; Algorithm: 
-;;             1) Announce player's tournament score.
-;; Assistance Received: None.
-;; ********************************************************************* */
-(defun announceTournamentScores (player score)
-	(format t "~A has ~S points. ~%" player score))
-
-;; /* ********************************************************************* 
-;; Function Name: tournamentControl 
-;; Purpose: Main tournament control logc. Calls functions to announce scores and asks user to play again.
-;; Parameters: 
-;;			   prevWinner, previous winner of the tournament.
-;;			   scores, scores list that has tournament score for each player.
-;; Return Value: None.
-;; Local Variables: 
-;;             tournamentScore, list hold tournament scores for each player.
-;;			   playAgain, choice for human to play round again.
-;; Algorithm: 
-;;             1) Announce player's tournament score.
-;;			   2) Ask human if they want to play again. Record answer to local variable.
-;;			   3) Previous winner plays first.
-;; Assistance Received: None.
-;; ********************************************************************* */
-(defun tournamentControl (prevWinner scores)
-	;; Get tournament scores.
-	(let* ( (tournamentScore (calculateTournamentScore prevWinner scores)))
-		;; Announce tournament scores.
-		(format t "Tournament Scores: ~%")
-		(announceTournamentScores (first tournamentScore) (first (rest tournamentScore)))
-		(announceTournamentScores (first (rest (rest tournamentScore))) (first (rest (rest (rest tournamentScore)))))
-		;; Ask user to play again.
-		(let* ( (playAgain (readPlayAgain)))
-			(cond (	(string= playAgain "Y")
-					;; Previous winner plays first.
-					(newRound tournamentScore (first prevWinner)))
-				  (	(string= playAgain "N")
-				  	;; Quit game.
-					(Quit))))))
-	
-;; /* ********************************************************************* 
-;; Function Name: calculateTournamentScore 
-;; Purpose: Calculates tournament score by adding round score to the tournament score.
-;; Parameters: 
-;;			   roundScores, round scores.
-;;			   tournamentScores, tournament scores.
-;; Return Value: Returns new scores list containing the awarded difference in points to the tournament scores.
-;; Local Variables: 
-;;			   None.
-;; Algorithm: 
-;;             1) If first player is computer, return new list object given that the first player is computer.
-;;             2) If first player is human, return new list object given that the first player is human.
-;;			   3) I unfortunately did not standardize the scores list, therefore I have to always check to see who the first player is and adjust accordingly.
-;; Assistance Received: None.
-;; ********************************************************************* */	
-(defun calculateTournamentScore (roundScores tournamentScores)
-	(cond (	(string= (first roundScores) "COMPUTER")
-			(list 'computer (+ (first (rest tournamentScores)) (first (rest roundScores))) 'human (first (rest (rest (rest tournamentScores)))) (+ 1 (first (rest (rest (rest (rest tournamentScores))))))))
-		  (	(string= (first roundScores) "HUMAN")
-			(list 'computer (first (rest tournamentScores)) 'human (+ (first (rest (rest (rest tournamentScores)))) (first (rest roundScores))) (+ 1 (first (rest (rest (rest (rest tournamentScores))))))))))
-
-;; /* ********************************************************************* 
-;; Function Name: playHuman 
-;; Purpose: Logic for human player.
-;; Parameters: 
-;;			   players, list of players.
-;;			   board, game board.
-;;			   scores, current tournament scores.
-;;			   playerColor, human player color.
-;; Return Value: None.
-;; Local Variables: 
-;;			   coordinates, row and column positions of human player piece.
-;; Algorithm: 
-;;             1) Ask for player coordinates.
-;;			   2) Ask for direction to move.
-;;			   4) Validate coordinates and final coordinates.
-;;			   5) Update board if valid, else ask again.
-;; Assistance Received: None.
-;; ********************************************************************* */	
-(defun playHuman (players board scores playerColor)
-	(let*( (coordinates (append (readHumanRow) (readHumanColumn) ))
-		;; get final coordinates
-		(finalCoordinates (readHumanDirection coordinates))
-		;; checks if the piece at coordinates is equal to the player color
-		(isValidPiece (validPieceToMove board coordinates))
-		;; checks if the piece at new coordinates is "+"
-		(isValidDirection (validDirectionToMove board finalCoordinates)))
-		(cond (	(AND (OR (string= isValidPiece playerColor) (string= isValidPiece (getSuperPieceForPlayerColor playerColor))) (OR (string= isValidDirection (getSuperPieceForPlayerColor (getOppositePlayerColor playerColor))) (OR (string= isValidDirection "+") (string= isValidDirection (getOppositePlayerColor playerColor)))))
-				(playRound players (updateBoard board coordinates finalCoordinates (list isValidPiece)) 'computer scores))
-			  (t
-				(princ "Not a valid move. Try again.") 
-				(playRound players board 'human scores)))))
-
 ;; /* *********************************************
 ;; Source Code to help the computer win the game
 ;; ********************************************* */
-;; // List all the relevant functions here
-
-;; /* ********************************************************************* 
-;; Function Name: rev 
-;; Purpose: Reverses a list.
-;; Parameters: 
-;;			   list, a list to reverse.
-;; Return Value: None.
-;; Local Variables: 
-;;			   None.
-;; Algorithm: 
-;;             1) If list is null, return empty list.
-;;			   2) Recursively append the rest of the list to the first of the list.
-;; Assistance Received: Recieved help on stackoverflow.
-;;	https://stackoverflow.com/questions/34422711/reversing-list-in-lisp
-;; ********************************************************************* */	
-(defun rev (list)
-	(cond (	(null list) 
-			())
-		  (t 
-		  	(append (rev (rest list)) (list (first list))))))
 
 ;; /* ********************************************************************* 
 ;; Function Name: getClosestOpponent 
-;; Purpose: ...
+;; Purpose: Finds the first opponent piece relative and returns its coordinates.
 ;; Parameters: 
 ;;			   board, unnested board list.
 ;;			   boardlength, length of the board.
@@ -1658,7 +1661,8 @@
 ;; Local Variables: 
 ;;			   None.
 ;; Algorithm: 
-;;             1) ...
+;;             1) If the opponent is white, loop through the board until the first white piece is found. Return these coordinates.
+;;			   2) If the opponent is black, loop through the board until the first black piece is found. Return these coordinates.
 ;; Assistance Received: None.
 ;; ********************************************************************* */	
 (defun getClosestOpponent (board boardlength opponentColor index)	
@@ -1688,14 +1692,27 @@
 ;;			   playerColor, player color.
 ;; Return Value: Returns a list containing the original coordinates, final coordinates, and direction to play. Returns empty list if no piece can be blocked from east.
 ;; Local Variables: 
-;;			   ...
+;;			   validFinalCoordinate, holds the piece located at the position that would block opponent piece from the east.
+;;			   blockFromEast, holds piece located East of the opponent.
+;;			   blockFromSouthEast, holds piece located South East of the opponent.
+;;			   blockFromSouth, holds piece located South of the opponent.
+;;			   blockFromNorth, holds piece located North of the opponent.
+;;			   blockFromNorthEast, holds piece located North East of the opponent.
+;;			   finalCoordinates, list that includes row and column of final coordinate to move to.
 ;; Algorithm: 
-;;             1) ...
+;;             1) Check if the player color is black or white.
+;;			   2) Get piece located at coordinates that will block opponent piece.
+;;			   3) Get piece located at coordinates east of opponent piece.
+;;			   4) Get piece located at coordinates southeast of opponent piece.
+;;			   5) Get piece located at coordinates south of opponent piece.
+;;			   6) Get coordinates at location that will block opponent piece.
+;;			   7) If the piece located at coordinates that will block opponent piece is taken, return nil.
+;;			   8) Check each piece located at coordinates located eastward of opponent piece.
+;;			   9) If piece can be moved to the final coordinate, return a list containing original coordinates, final coordinates, and direction to play. 
+;;			   10) Returns empty list if no piece can be blocked from east.
 ;; Assistance Received: None.
 ;; ********************************************************************* */	
 (defun playDefenseEast(board opponentCoordinates playerColor)
-	;; check if can block from east, if so, return original coordinates and new coordinates
-
 	;; Computer is Black.
 	(cond (	(string= playerColor "B")
 				(let* (	(validFinalCoordinate (validDirectionToMove board (list (+ (first opponentCoordinates) 1) (+ (first (rest opponentCoordinates)) 1)) ))
@@ -1749,14 +1766,31 @@
 
 ;; /* ********************************************************************* 
 ;; Function Name: playDefenseWest 
-;; Purpose: ...
+;; Purpose: Decision-making logic for blocking an opponent piece using pieces located on the west.
 ;; Parameters: 
-;;			   ...
-;; Return Value: ...
+;;			   board, board object.
+;;			   opponentCoordinates, list containing coordinates of row and column of opponent piece.
+;;			   playerColor, player color.
+;; Return Value: Returns a list containing the original coordinates, final coordinates, and direction to play. Returns empty list if no piece can be blocked from west.
 ;; Local Variables: 
-;;			   ...
+;;			   validFinalCoordinate, holds the piece located at the position that would block opponent piece from the west.
+;;			   blockFromWest, holds piece located West of the opponent.
+;;			   blockFromSouthWest, holds piece located South West of the opponent.
+;;			   blockFromSouth, holds piece located South of the opponent.
+;;			   blockFromNorthWest, holds piece located North West of the opponent.
+;;			   blockFromNorth, holds piece located North of the opponent.
+;;			   finalCoordinates, list that includes row and column of final coordinate to move to.
 ;; Algorithm: 
-;;             1) ...
+;;             1) Check if the player color is black or white.
+;;			   2) Get piece located at coordinates that will block opponent piece.
+;;			   3) Get piece located at coordinates west of opponent piece.
+;;			   4) Get piece located at coordinates southwest of opponent piece.
+;;			   5) Get piece located at coordinates south of opponent piece.
+;;			   6) Get coordinates at location that will block opponent piece.
+;;			   7) If the piece located at coordinates that will block opponent piece is taken, return nil.
+;;			   8) Check each piece located at coordinates located westward of opponent piece.
+;;			   9) If piece can be moved to the final coordinate, return a list containing original coordinates, final coordinates, and direction to play. 
+;;			   10) Returns empty list if no piece can be blocked from west.
 ;; Assistance Received: None.
 ;; ********************************************************************* */	
 (defun playDefenseWest(board opponentCoordinates playerColor)
@@ -1813,14 +1847,16 @@
 
 ;; /* ********************************************************************* 
 ;; Function Name: getRandomPiece 
-;; Purpose: ...
+;; Purpose: Select piece located at index of list. Assumption is index is randomly chosen.
 ;; Parameters: 
-;;			   ...
-;; Return Value: ...
+;;			   listOfPieces, list of pieces to pick from.
+;;			   index, index to select from list of pieces.
+;; Return Value: Return list containing row and column of random piece.
 ;; Local Variables: 
-;;			   ...
+;;			   None.
 ;; Algorithm: 
-;;             1) ...
+;;             1) If index is zero, return first of list which is piece coordinates.
+;;			   2) Else, call function again and decrement index.
 ;; Assistance Received: None.
 ;; ********************************************************************* */
 (defun getRandomPiece(listOfPieces index)
@@ -1832,61 +1868,74 @@
 
 ;; /* ********************************************************************* 
 ;; Function Name: randomPiece 
-;; Purpose: ...
+;; Purpose: Selects random index within a list of pieces.
 ;; Parameters: 
-;;			   board, game board.
-;;			   playerColor, color of the player.
-;;			   friendlyPiece, piece to move forward.
-;; Return Value: ...
+;;			   listOfPieces, list of player pieces.
+;; Return Value: Returns index of a list of pieces.
 ;; Local Variables: 
-;;			   ...
+;;			   randomSeed, stores random state needed to seed randomness.
 ;; Algorithm: 
-;;             1) ...
+;;             1) Use random function with length of list to get random index.
 ;; Assistance Received: None.
 ;; ********************************************************************* */
 (defun randomPiece(listOfPieces)
-;; Returns index for getting random piece from list
-	(random (length listOfPieces)))
+	(let* ( (randomSeed (make-random-state t)))
+		(random (length listOfPieces) randomSeed)))
 
 ;; /* ********************************************************************* 
 ;; Function Name: getFriendlyPieces 
-;; Purpose: ...
+;; Purpose: Create list of available pieces that the player controls.
 ;; Parameters: 
-;;			   board, game board.
+;;			   board, an unnested board list.
+;;			   boardlength, length of board.
 ;;			   playerColor, color of the player.
-;;			   friendlyPiece, piece to move forward.
-;; Return Value: ...
+;;			   index, index of piece in board. TODO: Refactor code to do recursive call without this parameter.
+;; Return Value: Returns a list of available players pieces' coordinates.
 ;; Local Variables: 
-;;			   ...
+;;			   None.
 ;; Algorithm: 
-;;             1) ...
+;;             1) If board is empty, return empty list.
+;;			   2) If first location in board matches player color, append its coordinates to a list.
+;;			   3) If not, call function again and with the rest of the board.
 ;; Assistance Received: None.
 ;; ********************************************************************* */
 (defun getFriendlyPieces(board boardlength playerColor index) 
-	;; Returns a list of friendly available pieces.
-	;; if board has been went thru, return empty list
 	(cond (	(eq (first board) nil)
 			())
+			;; If piece matches player color, append its coordiants to the list.
 		  ( (OR (string= (first board) playerColor) (string= (first board) (getSuperPieceForPlayerColor playerColor)))
 			(append (list (list (ceiling index boardlength) (cond ((= (rem index boardlength) 0) boardlength) (t (rem index boardlength)))))
 			(getFriendlyPieces (rest board) boardlength playerColor (+ index 1))))
+			;; Increment index and call again with rest of the board.
 		  (t
 		  	(getFriendlyPieces (rest board) boardlength playerColor (+ index 1)))))
 
 ;; /* ********************************************************************* 
 ;; Function Name: makeAttackDecision 
-;; Purpose: ...
+;; Purpose: Decision-making logic for advancing a player piece forward.
 ;; Parameters: 
-;;			   board, game board.
-;;			   playerColor, color of the player.
-;;			   friendlyPiece, piece to move forward.
-;; Return Value: ...
+;;			   board, board object.
+;;			   playerColor, player color.
+;; 			   friendlyPiece, coordinates of piece to move forward
+;; Return Value: Returns a list containing the original coordinates, final coordinates, and direction to play. Returns empty list if piece cannot move forward.
 ;; Local Variables: 
-;;			   ...
+;;			   validNorthWest, holds piece located northwest of the player piece.
+;;			   validNorthEast, holds piece located northeast of the player piece.
+;;			   coordiantesNorthEast, holds coordinates of piece located northeast of player piece.
+;;			   coordiantesNorthWest, holds coordinates of piece located northwest of player piece.
+;;			   validSouthWest, holds piece located southwest of the player piece.
+;;			   validSouthEast, holds piece located southeast of the player piece.
+;;			   coordiantesSouthEast, holds coordinates of piece located southeast of player piece.
+;;			   coordiantesSouthWest, holds coordinates of piece located southwest of player piece.
 ;; Algorithm: 
-;;             1) ...
+;;             1) Check if the player color is black or white.
+;;			   2) Get pieces located forward of friendly piece.
+;;			   3) Get coordinates of pieces located forward of friendly piece.
+;;			   4) If places of forward coordinates are taken, piece cannot be moved so return empty list.
+;;			   5) Get coordinates at location that will block opponent piece.
+;;			   6) If piece can be moved forward, return list containing original location of piece, final location of piece, and direction.
 ;; Assistance Received: None.
-;; ********************************************************************* */
+;; ********************************************************************* */	
 (defun makeAttackDecision(board playerColor friendlyPiece)
 	(cond (	(string= playerColor "B")
 			(let* (	;; Valid direction to move northeast.
@@ -2223,7 +2272,7 @@
 
 ;; /* ********************************************************************* 
 ;; Function Name: playComputer 
-;; Purpose: ..
+;; Purpose: Holds logic containing decision-making of computer strategy.
 ;; Parameters: 
 ;;             players, players list containing players and their colors.
 ;;			   board, contains board object.
@@ -2233,9 +2282,27 @@
 ;;			   opponentColor, color of the opponent player.
 ;; Return Value: none.
 ;; Local Variables: 
-;;             none.
+;;             opponentCoordinates, list of coordinates of the closest opponent.
+;;			   listOfPieces, list of computer pieces' coordinates.
+;;		   	   blockEast, output containing decision-making to block opponent piece from east.
+;;		   	   blockWest, output containing decision-making to block opponent piece from west.
+;;			   shouldRetreat, T or nil notifying computer to retreat or not.
+;;			   retreat, output containing decision-making to retreat.
+;;			   shouldCapture, T or nil notifying computer to capture a piece or not.
+;;		       capture, output containing decision-making to retreat.
+;;			   attack, output containing decision-making to move forward.
 ;; Algorithm: 
-;;             1) ...
+;;             1) Load local variables for computer's decision making. 
+;;			   2) Check if piece can block opponent.
+;;			   3) Check if piece must retreat. If so, get retreat strategy.
+;;			   4) Check if piece can capture. If so, get capture strategy.
+;;			   5) Get position to move to if piece must be moved forward.
+;;			   6) Once all variables loaded, do decision making strategy.
+;;			   7) If computer can capture, then update board and end turn.
+;;			   8) If computer can block piece from the east, then update board and end turn.
+;;			   9) If computer can block piece from the west, then update board and end turn.
+;;			   10) If computer must retreat, then update board and end turn.
+;;			   11) If computer can move forward, then update board and end turn.
 ;; Assistance Received: none 
 ;; ********************************************************************* */
 (defun playComputer (players board scores playerColor opponentColor)
@@ -2306,13 +2373,28 @@
 ;;			   currentTurn, current player.
 ;; Return Value: none.
 ;; Local Variables: 
-;;             choice, user choice for the menu.
-;;			   playerColor, current player's color.
-;;			   opponentColor, opponent player's color.
+;;             opponentCoordinates, list of coordinates of the closest opponent.
+;;			   listOfPieces, list of player pieces' coordinates.
+;;		   	   blockEast, output containing decision-making to block opponent piece from east.
+;;		   	   blockWest, output containing decision-making to block opponent piece from west.
+;;			   shouldRetreat, T or nil notifying player to retreat or not.
+;;			   retreat, output containing decision-making to retreat.
+;;			   shouldCapture, T or nil notifying player to capture a piece or not.
+;;		       capture, output containing decision-making to retreat.
+;;			   attack, output containing decision-making to move forward.
 ;; Algorithm: 
 ;;             1) Get the coordinates fo the closest opponent.
 ;;			   2) Get a list of coordinates of player pieces.
-;;			   3) ...
+;;			   3) Check if piece can block opponent.
+;;			   3) Check if piece must retreat. If so, get retreat strategy.
+;;			   4) Check if piece can capture. If so, get capture strategy.
+;;			   5) Get position to move to if piece must be moved forward.
+;;			   6) Once all variables loaded, do decision making strategy.
+;;			   7) If player can capture, then update board and end turn.
+;;			   8) If player can block piece from the east, then update board and end turn.
+;;			   9) If player can block piece from the west, then update board and end turn.
+;;			   10) If player must retreat, then update board and end turn.
+;;			   11) If player can move forward, then update board and end turn.
 ;; Assistance Received: none 
 ;; ********************************************************************* */
 (defun playHelp (players board scores playerColor opponentColor currentTurn)
@@ -2363,6 +2445,9 @@
 	;; Return back to playRound logic.
 	(playRound players board 'human scores))
 
+;; /* *********************************************
+;; Source Code for main round and tournament logic.
+;; ********************************************* */
 
 ;; /* ********************************************************************* 
 ;; Function Name: playRound 
