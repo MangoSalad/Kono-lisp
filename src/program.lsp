@@ -2332,7 +2332,7 @@
 		;; Coordiantes of piece to capture.
 		(capture (cond ((not (eq shouldCapture nil)) (playCapture board playerColor shouldCapture)) (t ())))
 		;; ;; Coordinates of forward advance.
-		(attack (cond ((OR (eq shouldRetreat nil) (eq shouldCapture nil)) (playAttack board playerColor listOfPieces)) (t ()))))
+		(attack (cond ((eq shouldRetreat nil) (playAttack board playerColor listOfPieces)) (t ()))))
 
 		(cond 	
 				;; Check to capture piece.
@@ -2425,7 +2425,7 @@
 		;; Coordinates of piece to capture.
 		(capture (cond ((not (eq shouldCapture nil)) (playCapture board playerColor shouldCapture)) (t ())))
 		;; Coordiantes of piece to move forward.
-		(attack (cond ((OR (eq shouldRetreat nil) (eq shouldCapture nil)) (playAttack board playerColor listOfPieces)) (t ()))))
+		(attack (cond ((eq shouldRetreat nil) (playAttack board playerColor listOfPieces)) (t ()))))
 
 			;; Capture piece.
 		(cond (	(AND (not (eq shouldCapture nil)) (not (eq capture nil)))
